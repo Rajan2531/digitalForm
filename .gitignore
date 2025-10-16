@@ -1,0 +1,12 @@
+# Root-level gitignore
+node_modules
+.env
+backend/.env
+frontend/.env
+backend/node_modules
+frontend/node_modules
+backend/data/uploads
+backend/data/complaints_master.xlsx
+frontend/dist
+.DS_Store
+

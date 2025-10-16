@@ -1,0 +1,27 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "This is the server that takes the form data and saves it into an excel sheet on local host and NAS",
+  "license": "ISC",
+  "author": "Rajan chouhan",
+  "type": "commonjs",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "exceljs": "^4.4.0",
+    "expres": "^0.0.5",
+    "express": "^5.1.0",
+    "fs": "^0.0.1-security",
+    "mongoose": "^8.19.1",
+    "multer": "^2.0.2",
+    "path": "^0.12.7",
+    "url": "^0.11.4",
+    "uuid": "^13.0.0",
+    "xlsx": "^0.18.5"
+  }
+}
