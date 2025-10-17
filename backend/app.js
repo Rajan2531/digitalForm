@@ -23,7 +23,9 @@ const EXCEL_PATH = path.join(STORAGE_PATH, "complaints.xlsx");
 const MAX_FILE_SIZE = parseInt(process.env.MAX_FILE_SIZE_BYTES || "10485760", 10);
 
 const app = express();
-app.use(cors());
+app.use(cors({
+    "origin":"*"
+}));
 app.use(express.json());
 
 
