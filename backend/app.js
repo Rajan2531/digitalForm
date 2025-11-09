@@ -104,7 +104,7 @@ app.get("/api/complaints", complaintController.getAllComplaints);
 app.get("/api/export/csv", complaintController.exportToCSV);
 app.get("/api/export/excel", complaintController.exportComplaintsStyledExcel)
 app.post("/api/complaint", cpUpload, complaintController.createComplaint);
-
+app.patch("/api/complaints/:id/mark-read", complaintController.markAsRead)
 
 // ✅ Serve uploaded files (for police to view attachments)
 app.use("/uploads", express.static(UPLOADS_DIR));

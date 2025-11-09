@@ -34,6 +34,10 @@ const ComplaintSchema = new mongoose.Schema(
       card_copy: String,
       other_docs: [String],
     },
+    isRead:{
+      type:Boolean,
+      default:false
+    }
   },
   { timestamps: true }
 );

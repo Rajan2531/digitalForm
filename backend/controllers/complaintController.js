@@ -532,3 +532,20 @@ exports.exportComplaintsStyledExcel = async (req, res) => {
     res.status(500).json({ ok: false, error: "Failed to export compact Excel" });
   }
 };
+
+
+exports.markAsRead = async(req, res, next)=>{
+   try {
+    const { id } = req.params;
+    const updated = await Complaint.findByIdAndUpdate(
+      id,
+      { isRead: true },
+      { new: true }
+    );
+    if (!updated) return res.status(404).json({ ok: false, error: "Not found" });
+    res.json({ ok: true, data: updated });
+  } catch (err) {
+    console.error("markAsRead error:", err);
+    res.status(500).json({ ok: false, error: "Failed to mark as read" });
+  }
+}
