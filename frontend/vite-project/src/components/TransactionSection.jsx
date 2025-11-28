@@ -61,7 +61,7 @@ export default function TransactionSection({ index, bank, updateBank }) {
           {/* Bank Info */}
           <div className="grid sm:grid-cols-3 gap-4">
             <label className="block text-sm text-gray-700 font-medium">
-              Bank Name
+             Complainant’s Bank Name
               <input
                 name="bank_name"
                 value={bank.bank_name}
@@ -73,7 +73,7 @@ export default function TransactionSection({ index, bank, updateBank }) {
             </label>
 
             <label className="block text-sm text-gray-700 font-medium">
-              Bank A/C No.
+              Complainant’s Bank A/C No.
               <input
                 name="account_no"
                 value={bank.account_no}

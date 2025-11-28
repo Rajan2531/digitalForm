@@ -1,34 +1,125 @@
 const Complaint = require("./../models/Complaint");
 const XLSX = require("xlsx")
-exports.createComplaint = async(req, res, next)=>{
-    try{
-        const {police_station, gd_case_no, complainant_name, relation, profession, present_address, phone_no, email_id, total_amount, amount_from, amount_to, fraud_description} = req.body;
-        const banks = JSON.parse(req.body.transactions || "[]");
-        const files = {
-            aadhar: req.files["aadhar"]?.[0]?.filename || "",
-            gd_copy: req.files["gd_copy"]?.[0]?.filename || "",
-            bank_statement: req.files["bank_statement"]?.[0]?.filename || "",
-            card_copy:req.files["card_copy"]?.[0]?.filename || "",
-            other_docs: (req.files["other_doc"] || []).map((f)=>f.filename),
-        }
+// exports.createComplaint = async(req, res, next)=>{
+//     try{
+//         const {police_station, gd_case_no, complainant_name, relation, profession, present_address, phone_no, email_id, total_amount, amount_from, amount_to, fraud_description} = req.body;
+//         const banks = JSON.parse(req.body.transactions || "[]");
+//         const files = {
+//             aadhar: req.files["aadhar"]?.[0]?.filename || "",
+//             gd_copy: req.files["gd_copy"]?.[0]?.filename || "",
+//             bank_statement: req.files["bank_statement"]?.[0]?.filename || "",
+//             card_copy:req.files["card_copy"]?.[0]?.filename || "",
+//             other_docs: (req.files["other_doc"] || []).map((f)=>f.filename),
+//         }
 
-        const complaint = await Complaint.create({police_station, gd_case_no, complainant_name, relation, profession, present_address, total_amount, 
-                             amount_from, amount_to, fraud_description, banks, files
-        })
+//         const complaint = await Complaint.create({police_station, gd_case_no, complainant_name, relation, profession, present_address, total_amount, 
+//                              amount_from, amount_to, fraud_description, banks, files
+//         })
         
-        res.status(200).json({
-            ok:true, 
-            message:"Complaint saved successfully"
-        })
+//         res.status(200).json({
+//             ok:true, 
+//             message:"Complaint saved successfully"
+//         })
 
-    } catch(err){
-        console.log(err);
-        res.status(500).json({
-            ok:false,
-            error: "Failed to save complaint"
-        })
-    }
-}
+//     } catch(err){
+//         console.log(err);
+//         res.status(500).json({
+//             ok:false,
+//             error: "Failed to save complaint"
+//         })
+//     }
+// }
+
+
+// new create complaint controller
+
+
+exports.createComplaint = async (req, res, next) => {
+  try {
+    const {
+      police_station,
+      gd_case_no,
+      complainant_name,
+      relation,
+      profession,
+      present_address,
+      phone_no,
+      email_id,
+      total_amount,
+      amount_from,
+      amount_to,
+      fraud_description,
+      dob,
+      age,
+      sex,
+      fraudster_phone,
+
+      // Optional card fraud fields
+      card_holder,
+      card_last4,
+      card_type,
+      issuing_bank,
+    } = req.body;
+
+    // Parse bank + transactions array
+    const banks = JSON.parse(req.body.transactions || "[]");
+
+    // File uploads
+    const files = {
+      aadhar: req.files?.aadhar?.[0]?.filename || "",
+      gd_copy: req.files?.gd_copy?.[0]?.filename || "",
+      bank_statement: req.files?.bank_statement?.[0]?.filename || "",
+      card_copy: req.files?.card_copy?.[0]?.filename || "",
+      other_docs: (req.files?.other_doc || []).map((f) => f.filename),
+    };
+
+    // Create complaint entry
+    const complaint = await Complaint.create({
+      police_station,
+      gd_case_no,
+      complainant_name,
+      relation,
+      profession,
+      present_address,
+      phone_no,
+      email_id,
+      dob,
+      age,
+      sex,
+      fraudster_phone,
+
+      total_amount,
+      amount_from,
+      amount_to,
+      fraud_description,
+
+      // Banks & files
+      banks,
+      files,
+
+      // Optional card-fraud fields
+      card_holder,
+      card_last4,
+      card_type,
+      issuing_bank,
+    });
+
+    res.status(200).json({
+      ok: true,
+      message: "Complaint saved successfully",
+      complaint_id: complaint.complaint_id, // return the generated ID
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      ok: false,
+      error: "Failed to save complaint",
+    });
+  }
+};
+
+
+
 
 exports.getAllComplaints = async(req, res, next)=>{
     try {

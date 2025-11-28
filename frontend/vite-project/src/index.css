@@ -56,3 +56,10 @@ button:hover { opacity: 0.95; }
     @apply mt-1 w-full border border-gray-300 rounded-md p-1 bg-gray-50 cursor-pointer focus:ring-2 focus:ring-blue-400 transition;
   }
 }
+
+.btn-blue { @apply bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md text-sm shadow; }
+.btn-green { @apply bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-md text-sm shadow; }
+.btn-gray { @apply bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-md text-sm shadow; }
+
+.th { @apply px-4 py-3 text-left font-semibold tracking-wide; }
+.td { @apply px-4 py-3 align-middle; }
