@@ -492,6 +492,7 @@ import TransactionSection from "./components/TransactionSection";
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
 
 export default function App() {
+  const [complaint_id, setComplaint_id] = useState('');
   const [form, setForm] = useState({
     police_station: "",
     gd_case_no: "",
@@ -541,7 +542,7 @@ export default function App() {
     };
     setBanks((prevBanks) => [...prevBanks, newBank]);
   };
-
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -557,8 +558,10 @@ export default function App() {
       const res = await axios.post(`${API_BASE}/api/complaint`, data, {
         headers: { "Content-Type": "multipart/form-data" },
       });
+      
 
       if (res.data.ok) {
+        setComplaint_id(()=>res.data.complaint_id)
         setSubmitted(true);
         setStatus(null);
       } else {
@@ -578,14 +581,14 @@ export default function App() {
           </h2>
           <p className="text-gray-600 mb-6">
             Your complaint has been successfully recorded. Please keep your
-            acknowledgment number safe.
+            complaint ID: <span className = " font-bold text-red-500">{complaint_id}</span> safe.
           </p>
-          <button
+          {/* <button
             onClick={() => window.location.reload()}
             className="px-6 py-2 bg-blue-700 text-white rounded-md hover:bg-blue-800 transition"
           >
             Submit Another
-          </button>
+          </button> */}
         </div>
       </div>
     );
@@ -785,7 +788,6 @@ export default function App() {
                     name="email_id"
                     value={form.email_id}
                     onChange={onChange}
-                    required
                     className="input"
                   />
                 </label>

@@ -115,7 +115,7 @@ export default function TransactionSection({ index, bank, updateBank }) {
                     <th className="px-2 py-2 border text-left">Date</th>
                     <th className="px-2 py-2 border text-left">Time</th>
                     <th className="px-2 py-2 border text-left">Transaction ID / Ref No.</th>
-                    <th className="px-2 py-2 border text-center">Action</th>
+                    {/* <th className="px-2 py-2 border text-center">Action</th> */}
                   </tr>
                 </thead>
                 <tbody>
@@ -150,7 +150,7 @@ export default function TransactionSection({ index, bank, updateBank }) {
                       <td className="p-2">
                         <input
                           type="text"
-                          placeholder="Ref No."
+                          placeholder="Txn id / UTR no."
                           value={txn.refNo}
                           onChange={(e) => handleTxnChange(i, "refNo", e.target.value)}
                           className="input-sm"
@@ -222,11 +222,11 @@ export default function TransactionSection({ index, bank, updateBank }) {
                       type="time"
                       value={txn.time}
                       onChange={(e) => handleTxnChange(i, "time", e.target.value)}
-                      className="input-sm"
+                      className="input-sm bg-blue-50"
                     />
                     <input
                       type="text"
-                      placeholder="Transaction ID / Ref No."
+                      placeholder="Transaction ID / UTR no."
                       value={txn.refNo}
                       onChange={(e) => handleTxnChange(i, "refNo", e.target.value)}
                       className="input-sm"

@@ -971,78 +971,1216 @@
 // }
 
 
+// import React, { useEffect, useState } from "react";
+// import axios from "axios";
+// import FilePreviewModal from "../components/FilePreviewModal";
+// import {
+//   BarChart, Bar,
+//   LineChart, Line,
+//   XAxis, YAxis, Tooltip, CartesianGrid,
+//   ResponsiveContainer
+// } from "recharts";
+
+// const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+
+// export default function Dashboard() {
+//   const [data, setData] = useState([]);
+//   const [filtered, setFiltered] = useState([]);
+//   const [search, setSearch] = useState("");
+//   const [statusFilter, setStatusFilter] = useState("");
+//   const [selectedComplaint, setSelectedComplaint] = useState(null);
+//   const [loading, setLoading] = useState(true);
+
+//   // ---------- FETCH COMPLAINTS ----------
+//   useEffect(() => {
+//     const fetchData = async () => {
+//       setLoading(true);
+//       try {
+//         const res = await axios.get(`${API_BASE}/api/complaints`);
+//         const sorted = res.data.data.sort((a, b) => Number(a.isRead) - Number(b.isRead));
+
+//         setData(sorted);
+//         setFiltered(sorted);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+//     fetchData();
+//   }, []);
+
+//   // ---------- MARK AS READ ----------
+//   const markAsRead = async (id) => {
+//     try {
+//       await axios.patch(`${API_BASE}/api/complaints/${id}/mark-read`);
+//       updateLocal(id, { isRead: true });
+//     } catch {}
+//   };
+
+//   // ---------- UPDATE STATUS ----------
+//   const updateStatus = async (id, status) => {
+//     await axios.patch(`${API_BASE}/api/complaints/${id}/status`, { status });
+//     updateLocal(id, { status });
+//   };
+
+//   const updateLocal = (id, fields) => {
+//     setData(prev => prev.map(c => c._id === id ? { ...c, ...fields } : c));
+//     setFiltered(prev => prev.map(c => c._id === id ? { ...c, ...fields } : c));
+//   };
+
+//   // ---------- SEARCH ----------
+//   const handleSearch = (e) => {
+//     const q = e.target.value.toLowerCase();
+//     setSearch(q);
+//     filter(q, statusFilter);
+//   };
+
+//   const handleStatusFilter = (val) => {
+//     setStatusFilter(val);
+//     filter(search, val);
+//   };
+
+//   const filter = (q, status) => {
+//     let result = [...data];
+
+//     if (q)
+//       result = result.filter(
+//         (c) =>
+//           c.complainant_name?.toLowerCase().includes(q) ||
+//           c.fraudster_phone?.toLowerCase().includes(q) ||
+//           c.police_station?.toLowerCase().includes(q) ||
+//           c.complaint_id?.toLowerCase().includes(q)
+//       );
+
+//     if (status) result = result.filter((c) => c.status === status);
+
+//     setFiltered(result);
+//   };
+
+//   // -------------------------------------
+//   //           ANALYTICS LOGIC
+//   // -------------------------------------
+//   const total = data.length;
+//   const unread = data.filter((c) => !c.isRead).length;
+//   const highValue = data.filter((c) => c.total_amount > 100000).length;
+
+//   const stationStats = Object.values(
+//     data.reduce((acc, c) => {
+//       if (!c.police_station) return acc;
+//       if (!acc[c.police_station]) acc[c.police_station] = { station: c.police_station, count: 0 };
+//       acc[c.police_station].count += 1;
+//       return acc;
+//     }, {})
+//   );
+
+//   const weeklyTrend = data
+//     .slice()
+//     .reverse()
+//     .slice(0, 7)
+//     .map((c, i) => ({
+//       day: `Day ${i + 1}`,
+//       amount: c.total_amount || 0
+//     }));
+
+//   return (
+//     <div className="min-h-screen bg-[#f5f7fa] p-6">
+//       <div className="max-w-7xl mx-auto">
+
+//         {/* ------------------------------ */}
+//         {/*        DASHBOARD HEADER        */}
+//         {/* ------------------------------ */}
+//         <div className="flex flex-col sm:flex-row justify-between items-start mb-8">
+//           <div>
+//             <h1 className="text-3xl font-bold text-gray-900">
+//               Cyber Cell Dashboard
+//             </h1>
+//             <p className="text-gray-500 mt-1">Modern Monitoring Panel</p>
+//           </div>
+
+//           <button
+//             onClick={() => window.location.reload()}
+//             className="px-4 py-2 bg-gray-900 text-white rounded-lg shadow hover:bg-black transition"
+//           >
+//             Refresh
+//           </button>
+//         </div>
+
+//         {/* ------------------------------ */}
+//         {/*       ANALYTICS OVERVIEW       */}
+//         {/* ------------------------------ */}
+//         <div className="grid sm:grid-cols-3 gap-6 mb-10">
+
+//           <div className="bg-white shadow-sm rounded-2xl p-6 border border-gray-100">
+//             <p className="text-gray-500">Total Complaints</p>
+//             <p className="text-3xl font-bold text-gray-900">{total}</p>
+//           </div>
+
+//           <div className="bg-white shadow-sm rounded-2xl p-6 border border-gray-100">
+//             <p className="text-gray-500">Unread</p>
+//             <p className="text-3xl font-bold text-yellow-600">{unread}</p>
+//           </div>
+
+//           <div className="bg-white shadow-sm rounded-2xl p-6 border border-gray-100">
+//             <p className="text-gray-500">High Value Fraud</p>
+//             <p className="text-3xl font-bold text-red-600">{highValue}</p>
+//           </div>
+
+//         </div>
+
+//         {/* ------------------------------ */}
+//         {/*            CHARTS              */}
+//         {/* ------------------------------ */}
+//         <div className="grid lg:grid-cols-2 gap-8 mb-12">
+
+//           {/* Station Stats */}
+//           <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
+//             <p className="font-semibold mb-4 text-gray-800">Complaints by Station</p>
+
+//             <div className="w-full h-64">
+//               <ResponsiveContainer width="100%" height="100%">
+//                 <BarChart data={stationStats}>
+//                   <CartesianGrid strokeDasharray="3 3" />
+//                   <XAxis dataKey="station" />
+//                   <YAxis />
+//                   <Tooltip />
+//                   <Bar dataKey="count" fill="#4f46e5" radius={[6, 6, 0, 0]} />
+//                 </BarChart>
+//               </ResponsiveContainer>
+//             </div>
+//           </div>
+
+//           {/* Amount Trend */}
+//           <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
+//             <p className="font-semibold mb-4 text-gray-800">Last 7 Complaints — Amount Trend</p>
+
+//             <div className="w-full h-64">
+//               <ResponsiveContainer width="100%" height="100%">
+//                 <LineChart data={weeklyTrend}>
+//                   <CartesianGrid strokeDasharray="3 3" />
+//                   <XAxis dataKey="day" />
+//                   <YAxis />
+//                   <Tooltip />
+//                   <Line type="monotone" dataKey="amount" stroke="#2563eb" strokeWidth={3} />
+//                 </LineChart>
+//               </ResponsiveContainer>
+//             </div>
+//           </div>
+
+//         </div>
+
+//         {/* ------------------------------ */}
+//         {/*             FILTERS            */}
+//         {/* ------------------------------ */}
+//         <div className="flex flex-col sm:flex-row gap-4 mb-6">
+//           <input
+//             value={search}
+//             onChange={handleSearch}
+//             placeholder="Search by name / id / station / phone..."
+//             className="flex-1 px-4 py-2 rounded-xl border shadow-sm bg-white"
+//           />
+
+//           <select
+//             className="px-3 py-2 rounded-xl border bg-white shadow-sm"
+//             value={statusFilter}
+//             onChange={(e) => handleStatusFilter(e.target.value)}
+//           >
+//             <option value="">All Status</option>
+//             <option value="Pending">Pending</option>
+//             <option value="Under Review">Under Review</option>
+//             <option value="Closed">Closed</option>
+//           </select>
+//         </div>
+
+//         {/* ------------------------------ */}
+//         {/*          COMPLAINT CARDS       */}
+//         {/* ------------------------------ */}
+//         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+//           {loading ? (
+//             <div className="text-gray-400 text-lg animate-pulse col-span-full text-center">
+//               Loading complaints…
+//             </div>
+//           ) : filtered.length === 0 ? (
+//             <div className="text-gray-400 italic col-span-full text-center">
+//               No complaints match the criteria.
+//             </div>
+//           ) : (
+//             filtered.map((c) => (
+//               <div
+//                 key={c._id}
+//                 onClick={() => {
+//                   setSelectedComplaint(c);
+//                   if (!c.isRead) markAsRead(c._id);
+//                 }}
+//                 className={`p-5 rounded-2xl shadow-md bg-white border cursor-pointer transition hover:scale-[1.02]
+//                   ${!c.isRead ? "border-yellow-400 bg-yellow-50" : "border-gray-200"}
+//                 `}
+//               >
+//                 {/* Header */}
+//                 <div className="flex justify-between items-center mb-3">
+//                   <p className="font-bold text-gray-800 text-lg">{c.complaint_id}</p>
+//                   {!c.isRead && (
+//                     <span className="text-xs px-2 py-1 bg-yellow-300 text-gray-900 rounded-full font-semibold">
+//                       NEW
+//                     </span>
+//                   )}
+//                 </div>
+
+//                 <p className="text-gray-700 font-semibold text-md">👤 {c.complainant_name}</p>
+
+//                 <p className="text-gray-600 mt-1">
+//                   📱 Fraudster: <span className="font-medium text-blue-700">
+//                     {c.fraudster_phone || "—"}
+//                   </span>
+//                 </p>
+
+//                 <p className="text-gray-600">🚓 {c.police_station}</p>
+
+//                 <p className="text-gray-900 mt-2 font-bold">
+//                   ₹{c.total_amount?.toLocaleString() || 0}
+//                 </p>
+
+//                 <div className="mt-3">
+//                   <span
+//                     className={`px-3 py-1 rounded-lg text-xs font-bold
+//                       ${c.status === "Closed"
+//                         ? "bg-green-100 text-green-700"
+//                         : c.status === "Under Review"
+//                         ? "bg-orange-100 text-orange-700"
+//                         : "bg-gray-200 text-gray-700"}
+//                     `}
+//                   >
+//                     {c.status || "Pending"}
+//                   </span>
+//                 </div>
+
+//                 <button className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition">
+//                   View Details →
+//                 </button>
+//               </div>
+//             ))
+//           )}
+//         </div>
+//       </div>
+
+//       {/* MODAL */}
+//       {selectedComplaint && (
+//         <FilePreviewModal
+//           complaint={selectedComplaint}
+//           apiBase={API_BASE}
+//           onClose={() => setSelectedComplaint(null)}
+//         />
+//       )}
+//     </div>
+//   );
+// }
+
+
+
+// import React, { useEffect, useState } from "react";
+// import axios from "axios";
+// import FilePreviewModal from "../components/FilePreviewModal";
+
+// import {
+//   BarChart,
+//   Bar,
+//   LineChart,
+//   Line,
+//   XAxis,
+//   YAxis,
+//   Tooltip,
+//   CartesianGrid,
+//   ResponsiveContainer,
+// } from "recharts";
+
+// const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+
+// export default function Dashboard() {
+//   const [data, setData] = useState([]);
+//   const [filtered, setFiltered] = useState([]);
+
+//   const [search, setSearch] = useState("");
+//   const [statusFilter, setStatusFilter] = useState("");
+//   const [stationFilter, setStationFilter] = useState("");
+
+//   const [dateFrom, setDateFrom] = useState("");
+//   const [dateTo, setDateTo] = useState("");
+//   const [dateExact, setDateExact] = useState("");
+
+//   const [selectedComplaint, setSelectedComplaint] = useState(null);
+//   const [loading, setLoading] = useState(true);
+
+//   // -------------------------------------------------
+//   // FETCH COMPLAINTS
+//   // -------------------------------------------------
+//   useEffect(() => {
+//     const fetchData = async () => {
+//       setLoading(true);
+//       try {
+//         const res = await axios.get(`${API_BASE}/api/complaints`);
+
+//         const sorted = res.data.data.sort(
+//           (a, b) => Number(a.isRead) - Number(b.isRead)
+//         );
+
+//         setData(sorted);
+//         setFiltered(sorted);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+
+//     fetchData();
+//   }, []);
+
+//   // -------------------------------------------------
+//   // MARK AS READ
+//   // -------------------------------------------------
+//   const markAsRead = async (id) => {
+//     await axios.patch(`${API_BASE}/api/complaints/${id}/mark-read`);
+//     updateLocal(id, { isRead: true });
+//   };
+
+//   const updateStatus = async (id, status) => {
+//     await axios.patch(`${API_BASE}/api/complaints/${id}/status`, { status });
+//     updateLocal(id, { status });
+//   };
+
+//   const updateLocal = (id, fields) => {
+//     setData((prev) =>
+//       prev.map((c) => (c._id === id ? { ...c, ...fields } : c))
+//     );
+//     setFiltered((prev) =>
+//       prev.map((c) => (c._id === id ? { ...c, ...fields } : c))
+//     );
+//   };
+
+//   // -------------------------------------------------
+//   // SEARCH + FILTERS
+//   // -------------------------------------------------
+//   const handleSearch = (e) => {
+//     const q = e.target.value.toLowerCase();
+//     setSearch(q);
+//     filter(q, statusFilter, stationFilter, dateFrom, dateTo, dateExact);
+//   };
+
+//   const handleStatusFilter = (val) => {
+//     setStatusFilter(val);
+//     filter(search, val, stationFilter, dateFrom, dateTo, dateExact);
+//   };
+
+//   const filter = (q, status, station, from, to, exact) => {
+//     let result = [...data];
+
+//     // Search
+//     if (q)
+//       result = result.filter(
+//         (c) =>
+//           c.complainant_name?.toLowerCase().includes(q) ||
+//           c.fraudster_phone?.toLowerCase().includes(q) ||
+//           c.police_station?.toLowerCase().includes(q) ||
+//           c.complaint_id?.toLowerCase().includes(q)
+//       );
+
+//     // Status
+//     if (status) result = result.filter((c) => c.status === status);
+
+//     // Police Station
+//     if (station) result = result.filter((c) => c.police_station === station);
+
+//     // Exact Date
+//     if (exact)
+//       result = result.filter((c) => c.createdAt?.slice(0, 10) === exact);
+
+//     // From Date
+//     if (from)
+//       result = result.filter((c) => c.createdAt?.slice(0, 10) >= from);
+
+//     // To Date
+//     if (to) result = result.filter((c) => c.createdAt?.slice(0, 10) <= to);
+
+//     setFiltered(result);
+//   };
+
+//   // -------------------------------------------------
+//   // ANALYTICS
+//   // -------------------------------------------------
+//   const total = data.length;
+//   const unread = data.filter((c) => !c.isRead).length;
+//   const highValue = data.filter((c) => c.total_amount > 100000).length;
+
+//   const stationStats = Object.values(
+//     data.reduce((acc, c) => {
+//       if (!c.police_station) return acc;
+//       if (!acc[c.police_station])
+//         acc[c.police_station] = { station: c.police_station, count: 0 };
+//       acc[c.police_station].count += 1;
+//       return acc;
+//     }, {})
+//   );
+
+//   const weeklyTrend = data
+//     .slice()
+//     .reverse()
+//     .slice(0, 7)
+//     .map((c, i) => ({
+//       day: `Day ${i + 1}`,
+//       amount: c.total_amount || 0,
+//     }));
+
+//   return (
+//     <div className="min-h-screen bg-[#f5f7fa] p-6">
+//       <div className="max-w-7xl mx-auto">
+
+//         {/* HEADER */}
+//         <div className="flex flex-col sm:flex-row justify-between items-start mb-8">
+//           <div>
+//             <h1 className="text-3xl font-bold text-gray-900">
+//               Cyber Cell Dashboard
+//             </h1>
+//             <p className="text-gray-500 mt-1">Modern Monitoring Panel</p>
+//           </div>
+
+//           <button
+//             onClick={() => window.location.reload()}
+//             className="px-4 py-2 bg-gray-900 text-white rounded-lg shadow hover:bg-black transition"
+//           >
+//             Refresh
+//           </button>
+//         </div>
+
+//         {/* ANALYTICS */}
+//         <div className="grid sm:grid-cols-3 gap-6 mb-10">
+//           <div className="bg-white shadow-sm rounded-2xl p-6 border border-gray-100">
+//             <p className="text-gray-500">Total Complaints</p>
+//             <p className="text-3xl font-bold text-gray-900">{total}</p>
+//           </div>
+
+//           <div className="bg-white shadow-sm rounded-2xl p-6 border border-gray-100">
+//             <p className="text-gray-500">Unread</p>
+//             <p className="text-3xl font-bold text-yellow-600">{unread}</p>
+//           </div>
+
+//           <div className="bg-white shadow-sm rounded-2xl p-6 border border-gray-100">
+//             <p className="text-gray-500">High Value Fraud</p>
+//             <p className="text-3xl font-bold text-red-600">{highValue}</p>
+//           </div>
+//         </div>
+
+//         {/* CHARTS */}
+//         <div className="grid lg:grid-cols-2 gap-8 mb-12">
+//           <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
+//             <p className="font-semibold mb-4 text-gray-800">
+//               Complaints by Station
+//             </p>
+//             <div className="w-full h-64">
+//               <ResponsiveContainer width="100%" height="100%">
+//                 <BarChart data={stationStats}>
+//                   <CartesianGrid strokeDasharray="3 3" />
+//                   <XAxis dataKey="station" />
+//                   <YAxis />
+//                   <Tooltip />
+//                   <Bar dataKey="count" fill="#4f46e5" radius={[6, 6, 0, 0]} />
+//                 </BarChart>
+//               </ResponsiveContainer>
+//             </div>
+//           </div>
+
+//           <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
+//             <p className="font-semibold mb-4 text-gray-800">
+//               Last 7 Complaints — Amount Trend
+//             </p>
+//             <div className="w-full h-64">
+//               <ResponsiveContainer width="100%" height="100%">
+//                 <LineChart data={weeklyTrend}>
+//                   <CartesianGrid strokeDasharray="3 3" />
+//                   <XAxis dataKey="day" />
+//                   <YAxis />
+//                   <Tooltip />
+//                   <Line type="monotone" dataKey="amount" stroke="#2563eb" strokeWidth={3} />
+//                 </LineChart>
+//               </ResponsiveContainer>
+//             </div>
+//           </div>
+//         </div>
+
+//         {/* FILTERS */}
+//         <div className="grid md:grid-cols-4 sm:grid-cols-2 gap-4 mb-6">
+//           {/* Search */}
+//           <input
+//             value={search}
+//             onChange={handleSearch}
+//             placeholder="Search by name, ID, station, phone..."
+//             className="px-4 py-2 rounded-xl border shadow-sm bg-white"
+//           />
+
+//           {/* Status */}
+//           <select
+//             className="px-3 py-2 rounded-xl border bg-white shadow-sm"
+//             value={statusFilter}
+//             onChange={(e) => handleStatusFilter(e.target.value)}
+//           >
+//             <option value="">All Status</option>
+//             <option value="Pending">Pending</option>
+//             <option value="Under Review">Under Review</option>
+//             <option value="Closed">Closed</option>
+//           </select>
+
+//           {/* Station */}
+//           <select
+//             className="px-3 py-2 rounded-xl border bg-white shadow-sm"
+//             value={stationFilter}
+//             onChange={(e) => {
+//               setStationFilter(e.target.value);
+//               filter(search, statusFilter, e.target.value, dateFrom, dateTo, dateExact);
+//             }}
+//           >
+//             <option value="">All Police Stations</option>
+//             <option value="Jadavpur">Jadavpur</option>
+//             <option value="Patuli">Patuli</option>
+//             <option value="Netaji Nagar">Netaji Nagar</option>
+//             <option value="Regent Park">Regent Park</option>
+//             <option value="Garfa">Garfa</option>
+//             <option value="Kasba">Kasba</option>
+//             <option value="Bansdroni">Bansdroni</option>
+//             <option value="Golf Green">Golf Green</option>
+//             <option value="Patuli Women">Patuli Women</option>
+//             <option value="Cyber Cell">Cyber Cell</option>
+//           </select>
+
+//           {/* Exact Date */}
+//           <input
+//             type="date"
+//             value={dateExact}
+//             onChange={(e) => {
+//               setDateExact(e.target.value);
+//               filter(search, statusFilter, stationFilter, dateFrom, dateTo, e.target.value);
+//             }}
+//             className="px-3 py-2 rounded-xl border bg-white shadow-sm"
+//           />
+//         </div>
+
+//         {/* Date Range Filter */}
+//         <div className="grid sm:grid-cols-2 gap-4 mb-6">
+//           <input
+//             type="date"
+//             value={dateFrom}
+//             onChange={(e) => {
+//               setDateFrom(e.target.value);
+//               filter(search, statusFilter, stationFilter, e.target.value, dateTo, dateExact);
+//             }}
+//             className="px-3 py-2 rounded-xl border bg-white shadow-sm"
+//           />
+
+//           <input
+//             type="date"
+//             value={dateTo}
+//             onChange={(e) => {
+//               setDateTo(e.target.value);
+//               filter(search, statusFilter, stationFilter, dateFrom, e.target.value, dateExact);
+//             }}
+//             className="px-3 py-2 rounded-xl border bg-white shadow-sm"
+//           />
+//         </div>
+
+//         {/* ------------------------------ */}
+//         {/* TABLE — LIST VIEW */}
+//         {/* ------------------------------ */}
+//         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 mt-6 overflow-x-auto">
+//           <table className="min-w-full text-sm text-gray-700">
+//             <thead className="bg-gray-100 text-gray-900 text-xs uppercase">
+//               <tr>
+//                 <th className="px-4 py-3">Complaint ID</th>
+//                 <th className="px-4 py-3">Name</th>
+//                 <th className="px-4 py-3">Fraudster</th>
+//                 <th className="px-4 py-3">Amount</th>
+//                 <th className="px-4 py-3">Station</th>
+//                 <th className="px-4 py-3">Date</th>
+//                 <th className="px-4 py-3">Status</th>
+//                 <th className="px-4 py-3">Action</th>
+//               </tr>
+//             </thead>
+
+//             <tbody>
+//               {loading ? (
+//                 <tr>
+//                   <td colSpan="8" className="text-center py-6 text-gray-400">
+//                     Loading complaints…
+//                   </td>
+//                 </tr>
+//               ) : filtered.length === 0 ? (
+//                 <tr>
+//                   <td colSpan="8" className="text-center py-6 italic text-gray-400">
+//                     No complaints found.
+//                   </td>
+//                 </tr>
+//               ) : (
+//                 filtered.map((c) => (
+//                   <tr
+//                     key={c._id}
+//                     onClick={() => {
+//                       setSelectedComplaint(c);
+//                       if (!c.isRead) markAsRead(c._id);
+//                     }}
+//                     className={`border-b hover:bg-blue-50 cursor-pointer transition
+//                       ${!c.isRead ? "bg-yellow-50" : ""}
+//                     `}
+//                   >
+//                     <td className="px-4 py-3 font-bold">{c.complaint_id}</td>
+//                     <td className="px-4 py-3">{c.complainant_name}</td>
+//                     <td className="px-4 py-3 text-blue-700">
+//                       {c.fraudster_phone || "—"}
+//                     </td>
+//                     <td className="px-4 py-3 font-medium">
+//                       ₹{c.total_amount?.toLocaleString() || 0}
+//                     </td>
+//                     <td className="px-4 py-3">{c.police_station}</td>
+//                     <td className="px-4 py-3">
+//                       {c.createdAt?.slice(0, 10) || "—"}
+//                     </td>
+
+//                     <td className="px-4 py-3">
+//                       <span
+//                         className={`px-3 py-1 rounded-lg text-xs font-bold
+//                           ${
+//                             c.status === "Closed"
+//                               ? "bg-green-100 text-green-700"
+//                               : c.status === "Under Review"
+//                               ? "bg-orange-100 text-orange-700"
+//                               : "bg-gray-200 text-gray-700"
+//                           }`}
+//                       >
+//                         {c.status || "Pending"}
+//                       </span>
+//                     </td>
+
+//                     <td className="px-4 py-3">
+//                       <button className="text-blue-600 font-medium hover:underline">
+//                         View →
+//                       </button>
+//                     </td>
+//                   </tr>
+//                 ))
+//               )}
+//             </tbody>
+//           </table>
+//         </div>
+//       </div>
+
+//       {/* MODAL */}
+//       {selectedComplaint && (
+//         <FilePreviewModal
+//           complaint={selectedComplaint}
+//           apiBase={API_BASE}
+//           onClose={() => setSelectedComplaint(null)}
+//         />
+//       )}
+//     </div>
+//   );
+// }
+
+// import React, { useEffect, useState } from "react";
+// import axios from "axios";
+// import ComplaintFullView from "../components/FilePreviewModal";
+// import {
+//   BarChart,
+//   Bar,
+//   LineChart,
+//   Line,
+//   XAxis,
+//   YAxis,
+//   Tooltip,
+//   CartesianGrid,
+//   ResponsiveContainer,
+// } from "recharts";
+
+// const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+
+// export default function Dashboard() {
+//   const [data, setData] = useState([]);
+//   const [filtered, setFiltered] = useState([]);
+
+//   // FILTER STATES
+//   const [search, setSearch] = useState("");
+//   const [statusFilter, setStatusFilter] = useState("");
+//   const [stationFilter, setStationFilter] = useState("");
+//   const [dateExact, setDateExact] = useState("");
+//   const [dateFrom, setDateFrom] = useState("");
+//   const [dateTo, setDateTo] = useState("");
+
+//   const [selectedComplaint, setSelectedComplaint] = useState(null);
+//   const [loading, setLoading] = useState(true);
+
+//   // ------------------------------------------------------------
+//   // FETCH DATA
+//   // ------------------------------------------------------------
+//   const loadData = async () => {
+//     setLoading(true);
+//     try {
+//       const res = await axios.get(`${API_BASE}/api/complaints`);
+//       const sorted = res.data.data.sort(
+//         (a, b) => Number(a.isRead) - Number(b.isRead)
+//       );
+//       setData(sorted);
+//       setFiltered(sorted);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   useEffect(() => {
+//     loadData();
+//   }, []);
+
+//   // ------------------------------------------------------------
+//   // MARK AS READ (Works instantly)
+//   // ------------------------------------------------------------
+//   const markAsRead = async (id) => {
+//     try {
+//       await axios.patch(`${API_BASE}/api/complaints/${id}/mark-read`);
+
+//       // Update locally instantly
+//       setData((prev) =>
+//         prev.map((c) => (c._id === id ? { ...c, isRead: true } : c))
+//       );
+//       setFiltered((prev) =>
+//         prev.map((c) => (c._id === id ? { ...c, isRead: true } : c))
+//       );
+//     } catch (err) {
+//       console.error("Failed to mark as read:", err);
+//     }
+//   };
+
+//   // ------------------------------------------------------------
+//   // FILTER LOGIC
+//   // ------------------------------------------------------------
+//   const filter = (q, status, station, from, to, exact) => {
+//     let result = [...data];
+
+//     if (q)
+//       result = result.filter(
+//         (c) =>
+//           c.complainant_name?.toLowerCase().includes(q) ||
+//           c.fraudster_phone?.toLowerCase().includes(q) ||
+//           c.police_station?.toLowerCase().includes(q) ||
+//           c.complaint_id?.toLowerCase().includes(q)
+//       );
+
+//     if (status) result = result.filter((c) => c.status === status);
+
+//     if (station) result = result.filter((c) => c.police_station === station);
+
+//     if (exact) result = result.filter((c) => c.createdAt?.slice(0, 10) === exact);
+
+//     if (from) result = result.filter((c) => c.createdAt?.slice(0, 10) >= from);
+
+//     if (to) result = result.filter((c) => c.createdAt?.slice(0, 10) <= to);
+
+//     setFiltered(result);
+//   };
+
+//   const handleSearch = (e) => {
+//     const q = e.target.value.toLowerCase();
+//     setSearch(q);
+//     filter(q, statusFilter, stationFilter, dateFrom, dateTo, dateExact);
+//   };
+
+//   // ------------------------------------------------------------
+//   // ANALYTICS
+//   // ------------------------------------------------------------
+//   const total = data.length;
+//   const unread = data.filter((c) => !c.isRead).length;
+//   const highValue = data.filter((c) => c.total_amount > 100000).length;
+
+//   const stationStats = Object.values(
+//     data.reduce((acc, c) => {
+//       if (!c.police_station) return acc;
+//       if (!acc[c.police_station])
+//         acc[c.police_station] = { station: c.police_station, count: 0 };
+//       acc[c.police_station].count++;
+//       return acc;
+//     }, {})
+//   );
+
+//   const weeklyTrend = data
+//     .slice()
+//     .reverse()
+//     .slice(0, 7)
+//     .map((c, i) => ({
+//       day: `Day ${i + 1}`,
+//       amount: c.total_amount || 0,
+//     }));
+
+//   return (
+//     <>
+//       {!selectedComplaint ? (
+//         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
+//           <div className="max-w-7xl mx-auto">
+
+//             {/* ===================================================== */}
+//             {/* HEADER */}
+//             {/* ===================================================== */}
+//             <div className="flex justify-between items-center mb-10">
+//               <div>
+//                 <h1 className="text-4xl font-extrabold text-blue-700 drop-shadow-sm">
+//                   Cyber Cell Dashboard
+//                 </h1>
+//                 <p className="text-gray-700 mt-1 text-sm">
+//                   Kolkata Police — Fraud Monitoring & Case Management
+//                 </p>
+//               </div>
+
+//               <button
+//                 onClick={loadData}
+//                 className="px-5 py-2 bg-blue-700 text-white rounded-xl shadow hover:bg-blue-800 transition"
+//               >
+//                 Refresh Data
+//               </button>
+//             </div>
+
+//             {/* ===================================================== */}
+//             {/* ANALYTICS CARDS */}
+//             {/* ===================================================== */}
+//             <div className="grid sm:grid-cols-3 gap-6 mb-10">
+//               <div className="bg-white border-l-8 border-blue-600 rounded-2xl p-6 shadow">
+//                 <p className="text-gray-500">Total Complaints</p>
+//                 <p className="text-4xl font-bold text-blue-700">{total}</p>
+//               </div>
+
+//               <div className="bg-white border-l-8 border-yellow-400 rounded-2xl p-6 shadow">
+//                 <p className="text-gray-500">Unread Complaints</p>
+//                 <p className="text-4xl font-bold text-yellow-600">{unread}</p>
+//               </div>
+
+//               <div className="bg-white border-l-8 border-red-500 rounded-2xl p-6 shadow">
+//                 <p className="text-gray-500">High Value Fraud</p>
+//                 <p className="text-4xl font-bold text-red-600">{highValue}</p>
+//               </div>
+//             </div>
+
+//             {/* ===================================================== */}
+//             {/* CHARTS */}
+//             {/* ===================================================== */}
+//             <div className="grid lg:grid-cols-2 gap-8 mb-12">
+
+//               <div className="bg-white rounded-2xl shadow border p-6">
+//                 <p className="font-semibold mb-4 text-gray-800">
+//                   Cases by Police Station
+//                 </p>
+//                 <div className="w-full h-64">
+//                   <ResponsiveContainer>
+//                     <BarChart data={stationStats}>
+//                       <CartesianGrid strokeDasharray="3 3" />
+//                       <XAxis dataKey="station" />
+//                       <YAxis />
+//                       <Tooltip />
+//                       <Bar dataKey="count" fill="#2563eb" />
+//                     </BarChart>
+//                   </ResponsiveContainer>
+//                 </div>
+//               </div>
+
+//               <div className="bg-white rounded-2xl shadow border p-6">
+//                 <p className="font-semibold mb-4 text-gray-800">
+//                   Fraud Amount Trend (Last 7 Cases)
+//                 </p>
+//                 <div className="w-full h-64">
+//                   <ResponsiveContainer>
+//                     <LineChart data={weeklyTrend}>
+//                       <CartesianGrid strokeDasharray="3 3" />
+//                       <XAxis dataKey="day" />
+//                       <YAxis />
+//                       <Tooltip />
+//                       <Line type="monotone" dataKey="amount" stroke="#059669" strokeWidth={3} />
+//                     </LineChart>
+//                   </ResponsiveContainer>
+//                 </div>
+//               </div>
+
+//             </div>
+
+//             {/* ===================================================== */}
+//             {/* FILTER BAR */}
+//             {/* ===================================================== */}
+//             <div className="bg-white rounded-2xl shadow border p-5 mb-6">
+//               <h3 className="font-semibold text-gray-700 mb-3">Filters</h3>
+//               <div className="grid lg:grid-cols-6 gap-4">
+
+//                 <div>
+//                   <label className="block text-xs text-gray-600 mb-1">Search</label>
+//                   <input
+//                     value={search}
+//                     onChange={handleSearch}
+//                     className="px-4 py-2 w-full border rounded-xl shadow-sm"
+//                     placeholder="Name / ID / Phone / Station"
+//                   />
+//                 </div>
+
+//                 <div>
+//                   <label className="block text-xs text-gray-600 mb-1">Status</label>
+//                   <select
+//                     value={statusFilter}
+//                     onChange={(e) => {
+//                       setStatusFilter(e.target.value);
+//                       filter(search, e.target.value, stationFilter, dateFrom, dateTo, dateExact);
+//                     }}
+//                     className="px-3 py-2 border rounded-xl w-full bg-white shadow-sm"
+//                   >
+//                     <option value="">All</option>
+//                     <option value="Pending">Pending</option>
+//                     <option value="Under Review">Under Review</option>
+//                     <option value="Closed">Closed</option>
+//                   </select>
+//                 </div>
+
+//                 <div>
+//                   <label className="block text-xs text-gray-600 mb-1">Police Station</label>
+//                   <select
+//                     value={stationFilter}
+//                     onChange={(e) => {
+//                       setStationFilter(e.target.value);
+//                       filter(search, statusFilter, e.target.value, dateFrom, dateTo, dateExact);
+//                     }}
+//                     className="px-3 py-2 border rounded-xl w-full bg-white shadow-sm"
+//                   >
+//                     <option value="">All</option>
+//                     <option value="Jadavpur">Jadavpur</option>
+//                     <option value="Patuli">Patuli</option>
+//                     <option value="Netaji Nagar">Netaji Nagar</option>
+//                     <option value="Regent Park">Regent Park</option>
+//                     <option value="Garfa">Garfa</option>
+//                     <option value="Kasba">Kasba</option>
+//                     <option value="Bansdroni">Bansdroni</option>
+//                     <option value="Golf Green">Golf Green</option>
+//                     <option value="Patuli Women">Patuli Women</option>
+//                     <option value="Cyber Cell">Cyber Cell</option>
+//                   </select>
+//                 </div>
+
+//                 <div>
+//                   <label className="block text-xs text-gray-600 mb-1">Exact Date</label>
+//                   <input
+//                     type="date"
+//                     className="px-3 py-2 border rounded-xl w-full shadow-sm"
+//                     value={dateExact}
+//                     onChange={(e) => {
+//                       setDateExact(e.target.value);
+//                       filter(search, statusFilter, stationFilter, dateFrom, dateTo, e.target.value);
+//                     }}
+//                   />
+//                 </div>
+
+//                 <div>
+//                   <label className="block text-xs text-gray-600 mb-1">From</label>
+//                   <input
+//                     type="date"
+//                     className="px-3 py-2 border rounded-xl w-full shadow-sm"
+//                     value={dateFrom}
+//                     onChange={(e) => {
+//                       setDateFrom(e.target.value);
+//                       filter(search, statusFilter, stationFilter, e.target.value, dateTo, dateExact);
+//                     }}
+//                   />
+//                 </div>
+
+//                 <div>
+//                   <label className="block text-xs text-gray-600 mb-1">To</label>
+//                   <input
+//                     type="date"
+//                     className="px-3 py-2 border rounded-xl w-full shadow-sm"
+//                     value={dateTo}
+//                     onChange={(e) => {
+//                       setDateTo(e.target.value);
+//                       filter(search, statusFilter, stationFilter, dateFrom, e.target.value, dateExact);
+//                     }}
+//                   />
+//                 </div>
+
+//               </div>
+//             </div>
+
+//             {/* ===================================================== */}
+//             {/* LIST TABLE (COLORED) */}
+//             {/* ===================================================== */}
+//             <div className="bg-white rounded-2xl shadow border overflow-x-auto">
+//               <table className="min-w-full text-sm text-gray-700">
+//                 <thead className="bg-blue-100 text-blue-900 text-xs uppercase">
+//                   <tr>
+//                     <th className="px-3 py-3"> </th>
+//                     <th className="px-4 py-3 text-left">Complaint ID</th>
+//                     <th className="px-4 py-3 text-left">Complainant</th>
+//                     <th className="px-4 py-3 text-left">Fraudster</th>
+//                     <th className="px-4 py-3 text-left">Amount</th>
+//                     <th className="px-4 py-3 text-left">Station</th>
+//                     <th className="px-4 py-3 text-left">Date</th>
+//                     <th className="px-4 py-3 text-left">Status</th>
+//                   </tr>
+//                 </thead>
+
+//                 <tbody>
+//                   {loading ? (
+//                     <tr>
+//                       <td className="text-center py-6" colSpan="8">
+//                         Loading...
+//                       </td>
+//                     </tr>
+//                   ) : filtered.length === 0 ? (
+//                     <tr>
+//                       <td colSpan="8" className="text-center py-6 text-gray-500 italic">
+//                         No complaints match the filters.
+//                       </td>
+//                     </tr>
+//                   ) : (
+//                     filtered.map((c) => (
+//                       <tr
+//                         key={c._id}
+//                         className={`border-b transition hover:bg-blue-50 ${
+//                           !c.isRead ? "bg-yellow-50" : ""
+//                         }`}
+//                         onClick={() => {
+//                           if (!c.isRead) markAsRead(c._id);
+//                           setSelectedComplaint(c);
+//                         }}
+//                       >
+//                         {/* Sticky NEW badge */}
+//                         <td
+//                           className="px-3 py-3 bg-white"
+//                           style={{
+//                             position: "sticky",
+//                             left: 0,
+//                             zIndex: 20,
+//                             borderRight: "1px solid #e5e7eb",
+//                           }}
+//                         >
+//                           {!c.isRead && (
+//                             <span className="bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded-full shadow-sm">
+//                               NEW
+//                             </span>
+//                           )}
+//                         </td>
+
+//                         <td className="px-4 py-3 font-semibold text-blue-700">{c.complaint_id}</td>
+//                         <td className="px-4 py-3">{c.complainant_name}</td>
+//                         <td className="px-4 py-3 text-blue-600">{c.fraudster_phone || "—"}</td>
+//                         <td className="px-4 py-3 font-medium text-green-700">
+//                           ₹{c.total_amount?.toLocaleString()}
+//                         </td>
+//                         <td className="px-4 py-3">{c.police_station}</td>
+//                         <td className="px-4 py-3">{c.createdAt?.slice(0, 10)}</td>
+
+//                         <td className="px-4 py-3">
+//                           <span
+//                             className={`px-3 py-1 rounded-lg text-xs font-bold ${
+//                               c.status === "Closed"
+//                                 ? "bg-green-200 text-green-800"
+//                                 : c.status === "Under Review"
+//                                 ? "bg-orange-200 text-orange-800"
+//                                 : "bg-gray-200 text-gray-700"
+//                             }`}
+//                           >
+//                             {c.status || "Pending"}
+//                           </span>
+//                         </td>
+//                       </tr>
+//                     ))
+//                   )}
+//                 </tbody>
+//               </table>
+//             </div>
+//           </div>
+//         </div>
+//       ) : (
+//         <ComplaintFullView
+//           complaint={selectedComplaint}
+//           apiBase={API_BASE}
+//           onClose={() => setSelectedComplaint(null)}
+//           refresh={loadData}
+//         />
+//       )}
+//     </>
+//   );
+// }
+
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import FilePreviewModal from "../components/FilePreviewModal";
+import ComplaintFullView from "../components/FilePreviewModal";
 import {
-  BarChart, Bar,
-  LineChart, Line,
-  XAxis, YAxis, Tooltip, CartesianGrid,
-  ResponsiveContainer
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  ResponsiveContainer,
 } from "recharts";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
 
+/**
+ * Dashboard.js
+ * Theme: Option C (Material "Candy")
+ */
 export default function Dashboard() {
   const [data, setData] = useState([]);
   const [filtered, setFiltered] = useState([]);
+
+  // filters
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [stationFilter, setStationFilter] = useState("");
+  const [dateExact, setDateExact] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // ---------- FETCH COMPLAINTS ----------
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const res = await axios.get(`${API_BASE}/api/complaints`);
-        const sorted = res.data.data.sort((a, b) => Number(a.isRead) - Number(b.isRead));
+  // -----------------------------
+  // Fetch complaints
+  // -----------------------------
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get(`${API_BASE}/api/complaints`);
+      const sorted = res.data.data.sort(
+        (a, b) => Number(a.isRead) - Number(b.isRead)
+      );
+      setData(sorted);
+      setFiltered(sorted);
+    } catch (err) {
+      console.error("Failed to load complaints:", err);
+      setData([]);
+      setFiltered([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        setData(sorted);
-        setFiltered(sorted);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+  useEffect(() => {
+    loadData();
   }, []);
 
-  // ---------- MARK AS READ ----------
+  // -----------------------------
+  // Mark as read (DB + local)
+  // -----------------------------
   const markAsRead = async (id) => {
     try {
       await axios.patch(`${API_BASE}/api/complaints/${id}/mark-read`);
-      updateLocal(id, { isRead: true });
-    } catch {}
+      // optimistic local update
+      setData((prev) => prev.map((c) => (c._id === id ? { ...c, isRead: true } : c)));
+      setFiltered((prev) => prev.map((c) => (c._id === id ? { ...c, isRead: true } : c)));
+    } catch (err) {
+      console.error("markAsRead failed:", err);
+    }
   };
 
-  // ---------- UPDATE STATUS ----------
-  const updateStatus = async (id, status) => {
-    await axios.patch(`${API_BASE}/api/complaints/${id}/status`, { status });
-    updateLocal(id, { status });
-  };
-
-  const updateLocal = (id, fields) => {
-    setData(prev => prev.map(c => c._id === id ? { ...c, ...fields } : c));
-    setFiltered(prev => prev.map(c => c._id === id ? { ...c, ...fields } : c));
-  };
-
-  // ---------- SEARCH ----------
-  const handleSearch = (e) => {
-    const q = e.target.value.toLowerCase();
-    setSearch(q);
-    filter(q, statusFilter);
-  };
-
-  const handleStatusFilter = (val) => {
-    setStatusFilter(val);
-    filter(search, val);
-  };
-
-  const filter = (q, status) => {
+  // -----------------------------
+  // Filter logic
+  // -----------------------------
+  const filter = (q, status, station, from, to, exact) => {
     let result = [...data];
 
-    if (q)
+    if (q) {
       result = result.filter(
         (c) =>
           c.complainant_name?.toLowerCase().includes(q) ||
@@ -1050,15 +2188,26 @@ export default function Dashboard() {
           c.police_station?.toLowerCase().includes(q) ||
           c.complaint_id?.toLowerCase().includes(q)
       );
+    }
 
     if (status) result = result.filter((c) => c.status === status);
+    if (station) result = result.filter((c) => c.police_station === station);
+    if (exact) result = result.filter((c) => c.createdAt?.slice(0, 10) === exact);
+    if (from) result = result.filter((c) => c.createdAt?.slice(0, 10) >= from);
+    if (to) result = result.filter((c) => c.createdAt?.slice(0, 10) <= to);
 
     setFiltered(result);
   };
 
-  // -------------------------------------
-  //           ANALYTICS LOGIC
-  // -------------------------------------
+  const handleSearch = (e) => {
+    const q = e.target.value.toLowerCase();
+    setSearch(q);
+    filter(q, statusFilter, stationFilter, dateFrom, dateTo, dateExact);
+  };
+
+  // -----------------------------
+  // Analytics helpers
+  // -----------------------------
   const total = data.length;
   const unread = data.filter((c) => !c.isRead).length;
   const highValue = data.filter((c) => c.total_amount > 100000).length;
@@ -1067,7 +2216,7 @@ export default function Dashboard() {
     data.reduce((acc, c) => {
       if (!c.police_station) return acc;
       if (!acc[c.police_station]) acc[c.police_station] = { station: c.police_station, count: 0 };
-      acc[c.police_station].count += 1;
+      acc[c.police_station].count++;
       return acc;
     }, {})
   );
@@ -1078,197 +2227,294 @@ export default function Dashboard() {
     .slice(0, 7)
     .map((c, i) => ({
       day: `Day ${i + 1}`,
-      amount: c.total_amount || 0
+      amount: c.total_amount || 0,
     }));
 
+  // -----------------------------
+  // Helpers for themed classes
+  // -----------------------------
+  const statusBadgeClass = (status) => {
+    if (status === "Closed") return "bg-green-100 text-green-800";
+    if (status === "Under Review") return "bg-pink-100 text-pink-700";
+    return "bg-gray-100 text-gray-800";
+  };
+
   return (
-    <div className="min-h-screen bg-[#f5f7fa] p-6">
-      <div className="max-w-7xl mx-auto">
+    <>
+      {!selectedComplaint ? (
+        <div className="min-h-screen bg-gradient-to-br from-pink-50 via-indigo-50 to-blue-50 p-6">
+          <div className="max-w-7xl mx-auto">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+              <div>
+                <h1 className="text-4xl font-extrabold text-indigo-600">Candy Dashboard</h1>
+                <p className="text-sm text-gray-600 mt-1">Colorful overview of complaints</p>
+              </div>
 
-        {/* ------------------------------ */}
-        {/*        DASHBOARD HEADER        */}
-        {/* ------------------------------ */}
-        <div className="flex flex-col sm:flex-row justify-between items-start mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Cyber Cell Dashboard
-            </h1>
-            <p className="text-gray-500 mt-1">Modern Monitoring Panel</p>
-          </div>
-
-          <button
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-gray-900 text-white rounded-lg shadow hover:bg-black transition"
-          >
-            Refresh
-          </button>
-        </div>
-
-        {/* ------------------------------ */}
-        {/*       ANALYTICS OVERVIEW       */}
-        {/* ------------------------------ */}
-        <div className="grid sm:grid-cols-3 gap-6 mb-10">
-
-          <div className="bg-white shadow-sm rounded-2xl p-6 border border-gray-100">
-            <p className="text-gray-500">Total Complaints</p>
-            <p className="text-3xl font-bold text-gray-900">{total}</p>
-          </div>
-
-          <div className="bg-white shadow-sm rounded-2xl p-6 border border-gray-100">
-            <p className="text-gray-500">Unread</p>
-            <p className="text-3xl font-bold text-yellow-600">{unread}</p>
-          </div>
-
-          <div className="bg-white shadow-sm rounded-2xl p-6 border border-gray-100">
-            <p className="text-gray-500">High Value Fraud</p>
-            <p className="text-3xl font-bold text-red-600">{highValue}</p>
-          </div>
-
-        </div>
-
-        {/* ------------------------------ */}
-        {/*            CHARTS              */}
-        {/* ------------------------------ */}
-        <div className="grid lg:grid-cols-2 gap-8 mb-12">
-
-          {/* Station Stats */}
-          <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
-            <p className="font-semibold mb-4 text-gray-800">Complaints by Station</p>
-
-            <div className="w-full h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={stationStats}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="station" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="count" fill="#4f46e5" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* Amount Trend */}
-          <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
-            <p className="font-semibold mb-4 text-gray-800">Last 7 Complaints — Amount Trend</p>
-
-            <div className="w-full h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={weeklyTrend}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="day" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="amount" stroke="#2563eb" strokeWidth={3} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-        </div>
-
-        {/* ------------------------------ */}
-        {/*             FILTERS            */}
-        {/* ------------------------------ */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <input
-            value={search}
-            onChange={handleSearch}
-            placeholder="Search by name / id / station / phone..."
-            className="flex-1 px-4 py-2 rounded-xl border shadow-sm bg-white"
-          />
-
-          <select
-            className="px-3 py-2 rounded-xl border bg-white shadow-sm"
-            value={statusFilter}
-            onChange={(e) => handleStatusFilter(e.target.value)}
-          >
-            <option value="">All Status</option>
-            <option value="Pending">Pending</option>
-            <option value="Under Review">Under Review</option>
-            <option value="Closed">Closed</option>
-          </select>
-        </div>
-
-        {/* ------------------------------ */}
-        {/*          COMPLAINT CARDS       */}
-        {/* ------------------------------ */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {loading ? (
-            <div className="text-gray-400 text-lg animate-pulse col-span-full text-center">
-              Loading complaints…
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="text-gray-400 italic col-span-full text-center">
-              No complaints match the criteria.
-            </div>
-          ) : (
-            filtered.map((c) => (
-              <div
-                key={c._id}
-                onClick={() => {
-                  setSelectedComplaint(c);
-                  if (!c.isRead) markAsRead(c._id);
-                }}
-                className={`p-5 rounded-2xl shadow-md bg-white border cursor-pointer transition hover:scale-[1.02]
-                  ${!c.isRead ? "border-yellow-400 bg-yellow-50" : "border-gray-200"}
-                `}
-              >
-                {/* Header */}
-                <div className="flex justify-between items-center mb-3">
-                  <p className="font-bold text-gray-800 text-lg">{c.complaint_id}</p>
-                  {!c.isRead && (
-                    <span className="text-xs px-2 py-1 bg-yellow-300 text-gray-900 rounded-full font-semibold">
-                      NEW
-                    </span>
-                  )}
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-full shadow">
+                  <svg className="w-5 h-5 text-pink-500" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    <path d="M12 18v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    <path d="M4.93 4.93l2.83 2.83" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    <path d="M16.24 16.24l2.83 2.83" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5" />
+                  </svg>
+                  <div className="text-sm text-gray-700 font-medium">Unread</div>
+                  <div className="ml-2 px-2 py-1 rounded-full bg-indigo-100 text-indigo-700 font-semibold text-sm">
+                    {unread}
+                  </div>
                 </div>
 
-                <p className="text-gray-700 font-semibold text-md">👤 {c.complainant_name}</p>
-
-                <p className="text-gray-600 mt-1">
-                  📱 Fraudster: <span className="font-medium text-blue-700">
-                    {c.fraudster_phone || "—"}
-                  </span>
-                </p>
-
-                <p className="text-gray-600">🚓 {c.police_station}</p>
-
-                <p className="text-gray-900 mt-2 font-bold">
-                  ₹{c.total_amount?.toLocaleString() || 0}
-                </p>
-
-                <div className="mt-3">
-                  <span
-                    className={`px-3 py-1 rounded-lg text-xs font-bold
-                      ${c.status === "Closed"
-                        ? "bg-green-100 text-green-700"
-                        : c.status === "Under Review"
-                        ? "bg-orange-100 text-orange-700"
-                        : "bg-gray-200 text-gray-700"}
-                    `}
-                  >
-                    {c.status || "Pending"}
-                  </span>
-                </div>
-
-                <button className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition">
-                  View Details →
+                <button
+                  onClick={loadData}
+                  className="px-4 py-2 rounded-lg bg-indigo-600 text-white shadow hover:bg-indigo-700 transition"
+                >
+                  Refresh
                 </button>
               </div>
-            ))
-          )}
-        </div>
-      </div>
+            </div>
 
-      {/* MODAL */}
-      {selectedComplaint && (
-        <FilePreviewModal
+            {/* Analytics cards */}
+            <div className="grid md:grid-cols-3 gap-6 mb-8">
+              <div className="bg-white rounded-2xl shadow p-5 border-l-4 border-indigo-400">
+                <p className="text-xs text-gray-500">Total Complaints</p>
+                <div className="mt-2 text-3xl font-bold text-indigo-700">{total}</div>
+              </div>
+              <div className="bg-white rounded-2xl shadow p-5 border-l-4 border-pink-400">
+                <p className="text-xs text-gray-500">Unread</p>
+                <div className="mt-2 text-3xl font-bold text-pink-600">{unread}</div>
+              </div>
+              <div className="bg-white rounded-2xl shadow p-5 border-l-4 border-green-400">
+                <p className="text-xs text-gray-500">High Value (&gt;1L)</p>
+                <div className="mt-2 text-3xl font-bold text-green-700">{highValue}</div>
+              </div>
+            </div>
+
+            {/* Charts */}
+            <div className="grid lg:grid-cols-2 gap-6 mb-8">
+              <div className="bg-white rounded-2xl shadow p-5">
+                <p className="text-sm font-semibold text-gray-800 mb-3">Cases by Station</p>
+                <div className="w-full h-56">
+                  <ResponsiveContainer>
+                    <BarChart data={stationStats}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="station" tick={{ fontSize: 12 }} />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="count" fill="#6366f1" radius={[6, 6, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl shadow p-5">
+                <p className="text-sm font-semibold text-gray-800 mb-3">Amount Trend (last 7)</p>
+                <div className="w-full h-56">
+                  <ResponsiveContainer>
+                    <LineChart data={weeklyTrend}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="day" tick={{ fontSize: 12 }} />
+                      <YAxis />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="amount" stroke="#10b981" strokeWidth={3} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+
+            {/* Filters */}
+            <div className="bg-white rounded-2xl shadow p-5 mb-6">
+              <h4 className="text-sm font-semibold text-gray-800 mb-3">Filters</h4>
+
+              <div className="grid lg:grid-cols-6 gap-4">
+                <div className="lg:col-span-2">
+                  <label className="text-xs text-gray-500">Search</label>
+                  <input
+                    value={search}
+                    onChange={handleSearch}
+                    placeholder="Name / ID / Phone / Station"
+                    className="w-full mt-1 px-3 py-2 border rounded-xl shadow-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs text-gray-500">Status</label>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => {
+                      setStatusFilter(e.target.value);
+                      filter(search, e.target.value, stationFilter, dateFrom, dateTo, dateExact);
+                    }}
+                    className="w-full mt-1 px-3 py-2 border rounded-xl shadow-sm"
+                  >
+                    <option value="">All</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Under Review">Under Review</option>
+                    <option value="Closed">Closed</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs text-gray-500">Police Station</label>
+                  <select
+                    value={stationFilter}
+                    onChange={(e) => {
+                      setStationFilter(e.target.value);
+                      filter(search, statusFilter, e.target.value, dateFrom, dateTo, dateExact);
+                    }}
+                    className="w-full mt-1 px-3 py-2 border rounded-xl shadow-sm"
+                  >
+                    <option value="">All</option>
+                    <option value="Jadavpur">Jadavpur</option>
+                    <option value="Patuli">Patuli</option>
+                    <option value="Netaji Nagar">Netaji Nagar</option>
+                    <option value="Regent Park">Regent Park</option>
+                    <option value="Garfa">Garfa</option>
+                    <option value="Kasba">Kasba</option>
+                    <option value="Bansdroni">Bansdroni</option>
+                    <option value="Golf Green">Golf Green</option>
+                    <option value="Patuli Women">Patuli Women</option>
+                    <option value="Cyber Cell">Cyber Cell</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs text-gray-500">Exact Date</label>
+                  <input
+                    type="date"
+                    value={dateExact}
+                    onChange={(e) => {
+                      setDateExact(e.target.value);
+                      filter(search, statusFilter, stationFilter, dateFrom, dateTo, e.target.value);
+                    }}
+                    className="w-full mt-1 px-3 py-2 border rounded-xl shadow-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs text-gray-500">From</label>
+                  <input
+                    type="date"
+                    value={dateFrom}
+                    onChange={(e) => {
+                      setDateFrom(e.target.value);
+                      filter(search, statusFilter, stationFilter, e.target.value, dateTo, dateExact);
+                    }}
+                    className="w-full mt-1 px-3 py-2 border rounded-xl shadow-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs text-gray-500">To</label>
+                  <input
+                    type="date"
+                    value={dateTo}
+                    onChange={(e) => {
+                      setDateTo(e.target.value);
+                      filter(search, statusFilter, stationFilter, dateFrom, e.target.value, dateExact);
+                    }}
+                    className="w-full mt-1 px-3 py-2 border rounded-xl shadow-sm"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Table list */}
+            <div className="bg-white rounded-2xl shadow overflow-x-auto">
+              <table className="min-w-full text-sm text-gray-700">
+                <colgroup>
+                  <col style={{ width: 64 }} />
+                  <col style={{ width: 180 }} />
+                  <col />
+                  <col style={{ width: 140 }} />
+                  <col style={{ width: 130 }} />
+                  <col style={{ width: 150 }} />
+                  <col style={{ width: 120 }} />
+                </colgroup>
+
+                <thead className="bg-indigo-50 text-indigo-800 text-xs uppercase">
+                  <tr>
+                    <th className="px-3 py-3"></th>
+                    <th className="px-4 py-3 text-left">Complaint ID</th>
+                    <th className="px-4 py-3 text-left">Complainant</th>
+                    <th className="px-4 py-3 text-left">Fraudster</th>
+                    <th className="px-4 py-3 text-left">Amount</th>
+                    <th className="px-4 py-3 text-left">Station</th>
+                    <th className="px-4 py-3 text-left">Date</th>
+                    <th className="px-4 py-3 text-left">Status</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan="8" className="text-center py-8 text-gray-500">
+                        Loading...
+                      </td>
+                    </tr>
+                  ) : filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan="8" className="text-center py-8 text-gray-400 italic">
+                        No complaints found.
+                      </td>
+                    </tr>
+                  ) : (
+                    filtered.map((c) => (
+                      <tr
+                        key={c._id}
+                        className={`border-b transition-colors duration-200 hover:bg-indigo-50 ${
+                          !c.isRead ? "bg-pink-50" : "bg-white"
+                        }`}
+                        onClick={() => {
+                          if (!c.isRead) markAsRead(c._id);
+                          setSelectedComplaint(c);
+                        }}
+                      >
+                        {/* sticky badge */}
+                        <td
+                          className="px-3 py-3 bg-white"
+                          style={{ position: "sticky", left: 0, zIndex: 20, borderRight: "1px solid #eef2ff" }}
+                        >
+                          {!c.isRead ? (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full bg-pink-200 text-pink-800 text-xs font-semibold shadow-sm">
+                              NEW
+                            </span>
+                          ) : (
+                            <span className="inline-block w-6" />
+                          )}
+                        </td>
+
+                        <td className="px-4 py-3 font-semibold text-indigo-700">{c.complaint_id}</td>
+                        <td className="px-4 py-3">{c.complainant_name}</td>
+                        <td className="px-4 py-3 text-indigo-600">{c.fraudster_phone || "—"}</td>
+                        <td className="px-4 py-3 font-medium text-green-600">₹{c.total_amount?.toLocaleString() || 0}</td>
+                        <td className="px-4 py-3">{c.police_station}</td>
+                        <td className="px-4 py-3">{c.createdAt?.slice(0, 10)}</td>
+                        <td className="px-4 py-3">
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusBadgeClass(c.status)}`}>
+                            {c.status || "Pending"}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <ComplaintFullView
           complaint={selectedComplaint}
           apiBase={API_BASE}
           onClose={() => setSelectedComplaint(null)}
+          refresh={loadData}
+          
+          
         />
       )}
-    </div>
+    </>
   );
 }
