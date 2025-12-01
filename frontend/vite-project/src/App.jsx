@@ -508,7 +508,19 @@ export default function App() {
     fraud_description: "",
     fraudster_phone: "", // ✅ new
   });
+  function calculateAge(birthDateString) {
+  const birthDate = new Date(birthDateString); // Convert string to Date object
+  const today = new Date();
 
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+
+  // Adjust age if the birthday hasn't occurred yet this year
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+}
   const [banks, setBanks] = useState([
     {
       bank_name: "",
@@ -733,7 +745,7 @@ export default function App() {
                     name="age"
                     min="0"
                     max="120"
-                    value={form.age || ""}
+                    value={calculateAge(form.age) || ""}
                     onChange={onChange}
                     className="input"
                     placeholder="Years"
@@ -782,7 +794,7 @@ export default function App() {
                 </label>
 
                 <label className="sm:col-span-2">
-                 Complainant's Email Id:<span className="text-red-500">*</span>
+                 Complainant's Email Id:
                   <input
                     type="email"
                     name="email_id"
