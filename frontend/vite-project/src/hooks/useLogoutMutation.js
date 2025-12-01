@@ -6,7 +6,7 @@ export function useLogoutMutation() {
 
   return useMutation({
     mutationFn: async () => {
-      await api.post("/auth/logout");
+      await api.post("/api/auth/logout");
     },
     onSuccess: () => {
       setAccessToken(null);
