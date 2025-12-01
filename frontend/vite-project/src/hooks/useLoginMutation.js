@@ -6,7 +6,7 @@ export function useLoginMutation() {
 
   return useMutation({
     mutationFn: async ({ email, password }) => {
-      const { data } = await api.post("/api/auth/login", { email, password });
+      const { data } = await api.post("/auth/login", { email, password });
       return data;
     },
     onSuccess: (data) => {
