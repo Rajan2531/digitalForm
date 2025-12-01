@@ -145,6 +145,47 @@ exports.exportToCSV = async (req, res) => {
   }
 }
 
+
+
+// --------------------------------------
+// UPDATE STATUS
+// --------------------------------------
+exports.updateStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+
+    await Complaint.findByIdAndUpdate(req.params.id, { status });
+
+    res.json({ success: true, message: "Status updated" });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// --------------------------------------
+// FULL UPDATE (FRONTEND EDIT MODE)
+// Supports: complaint info + complainant info + bank edit + tx edit
+// --------------------------------------
+exports.updateFull = async (req, res) => {
+  try {
+    const updatedComplaint = await Complaint.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+
+    res.json({
+      success: true,
+      message: "Complaint updated successfully",
+      data: updatedComplaint,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+
 // exports.exportComplaintsAsExcel = async (req, res) => {
 //   try {
 //     // 1️⃣ Fetch all complaints from MongoDB
