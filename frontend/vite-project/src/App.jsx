@@ -508,19 +508,7 @@ export default function App() {
     fraud_description: "",
     fraudster_phone: "", // ✅ new
   });
-  function calculateAge(birthDateString) {
-  const birthDate = new Date(birthDateString); // Convert string to Date object
-  const today = new Date();
 
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const monthDiff = today.getMonth() - birthDate.getMonth();
-
-  // Adjust age if the birthday hasn't occurred yet this year
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-    age--;
-  }
-  return age;
-}
   const [banks, setBanks] = useState([
     {
       bank_name: "",
@@ -535,8 +523,9 @@ export default function App() {
   const [submitted, setSubmitted] = useState(false);
   const [cardFraud, setCardFraud] = useState(false); // ✅ toggle for card fraud
 
-  const onChange = (e) =>
-    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+  const onChange = (e) =>{
+    
+    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));}
 
   const onFileChange = (e) =>
     setFiles((f) => ({ ...f, [e.target.name]: e.target.files[0] }));
@@ -745,7 +734,7 @@ export default function App() {
                     name="age"
                     min="0"
                     max="120"
-                    value={calculateAge(form.age) || ""}
+                    value={ || ""}
                     onChange={onChange}
                     className="input"
                     placeholder="Years"
