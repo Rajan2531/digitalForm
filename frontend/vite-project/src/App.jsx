@@ -734,7 +734,7 @@ export default function App() {
                     name="age"
                     min="0"
                     max="120"
-                    value={ || ""}
+                    value={ form.age|| ""}
                     onChange={onChange}
                     className="input"
                     placeholder="Years"
