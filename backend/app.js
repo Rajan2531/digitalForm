@@ -238,7 +238,7 @@ app.use(express.urlencoded({ extended: true, limit: JSON_LIMIT }));
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: ["http://localhost:5173", 'https://digital-form.netlify.app'],
     credentials: true
   })
 );

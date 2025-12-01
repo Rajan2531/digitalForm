@@ -18,6 +18,7 @@ createRoot(document.getElementById('root')).render(
    <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
+        <Route path = '/' element = {<App/>}/>
   <Route path="/login" element={<LoginPage />} />
 
   <Route
