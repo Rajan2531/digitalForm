@@ -2099,6 +2099,426 @@
 //   );
 // }
 
+// import React, { useEffect, useState } from "react";
+// import axios from "axios";
+// import ComplaintFullView from "../components/FilePreviewModal";
+// import {
+//   BarChart,
+//   Bar,
+//   LineChart,
+//   Line,
+//   XAxis,
+//   YAxis,
+//   Tooltip,
+//   CartesianGrid,
+//   ResponsiveContainer,
+// } from "recharts";
+
+// const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+
+// /**
+//  * Dashboard.js
+//  * Theme: Option C (Material "Candy")
+//  */
+// export default function Dashboard() {
+//   const [data, setData] = useState([]);
+//   const [filtered, setFiltered] = useState([]);
+
+//   // filters
+//   const [search, setSearch] = useState("");
+//   const [statusFilter, setStatusFilter] = useState("");
+//   const [stationFilter, setStationFilter] = useState("");
+//   const [dateExact, setDateExact] = useState("");
+//   const [dateFrom, setDateFrom] = useState("");
+//   const [dateTo, setDateTo] = useState("");
+
+//   const [selectedComplaint, setSelectedComplaint] = useState(null);
+//   const [loading, setLoading] = useState(true);
+
+//   // -----------------------------
+//   // Fetch complaints
+//   // -----------------------------
+//   const loadData = async () => {
+//     setLoading(true);
+//     try {
+//       const res = await axios.get(`${API_BASE}/api/complaints`);
+//       const sorted = res.data.data.sort(
+//         (a, b) => Number(a.isRead) - Number(b.isRead)
+//       );
+//       setData(sorted);
+//       setFiltered(sorted);
+//     } catch (err) {
+//       console.error("Failed to load complaints:", err);
+//       setData([]);
+//       setFiltered([]);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   useEffect(() => {
+//     loadData();
+//   }, []);
+
+//   // -----------------------------
+//   // Mark as read (DB + local)
+//   // -----------------------------
+//   const markAsRead = async (id) => {
+//     try {
+//       await axios.patch(`${API_BASE}/api/complaints/${id}/mark-read`);
+//       // optimistic local update
+//       setData((prev) => prev.map((c) => (c._id === id ? { ...c, isRead: true } : c)));
+//       setFiltered((prev) => prev.map((c) => (c._id === id ? { ...c, isRead: true } : c)));
+//     } catch (err) {
+//       console.error("markAsRead failed:", err);
+//     }
+//   };
+
+//   // -----------------------------
+//   // Filter logic
+//   // -----------------------------
+//   const filter = (q, status, station, from, to, exact) => {
+//     let result = [...data];
+
+//     if (q) {
+//       result = result.filter(
+//         (c) =>
+//           c.complainant_name?.toLowerCase().includes(q) ||
+//           c.fraudster_phone?.toLowerCase().includes(q) ||
+//           c.police_station?.toLowerCase().includes(q) ||
+//           c.complaint_id?.toLowerCase().includes(q)
+//       );
+//     }
+
+//     if (status) result = result.filter((c) => c.status === status);
+//     if (station) result = result.filter((c) => c.police_station === station);
+//     if (exact) result = result.filter((c) => c.createdAt?.slice(0, 10) === exact);
+//     if (from) result = result.filter((c) => c.createdAt?.slice(0, 10) >= from);
+//     if (to) result = result.filter((c) => c.createdAt?.slice(0, 10) <= to);
+
+//     setFiltered(result);
+//   };
+
+//   const handleSearch = (e) => {
+//     const q = e.target.value.toLowerCase();
+//     setSearch(q);
+//     filter(q, statusFilter, stationFilter, dateFrom, dateTo, dateExact);
+//   };
+
+//   // -----------------------------
+//   // Analytics helpers
+//   // -----------------------------
+//   const total = data.length;
+//   const unread = data.filter((c) => !c.isRead).length;
+//   const highValue = data.filter((c) => c.total_amount > 100000).length;
+
+//   const stationStats = Object.values(
+//     data.reduce((acc, c) => {
+//       if (!c.police_station) return acc;
+//       if (!acc[c.police_station]) acc[c.police_station] = { station: c.police_station, count: 0 };
+//       acc[c.police_station].count++;
+//       return acc;
+//     }, {})
+//   );
+
+//   const weeklyTrend = data
+//     .slice()
+//     .reverse()
+//     .slice(0, 7)
+//     .map((c, i) => ({
+//       day: `Day ${i + 1}`,
+//       amount: c.total_amount || 0,
+//     }));
+
+//   // -----------------------------
+//   // Helpers for themed classes
+//   // -----------------------------
+//   const statusBadgeClass = (status) => {
+//     if (status === "Closed") return "bg-green-100 text-green-800";
+//     if (status === "Under Review") return "bg-pink-100 text-pink-700";
+//     return "bg-gray-100 text-gray-800";
+//   };
+
+//   return (
+//     <>
+//       {!selectedComplaint ? (
+//         <div className="min-h-screen bg-gradient-to-br from-pink-50 via-indigo-50 to-blue-50 p-6">
+//           <div className="max-w-7xl mx-auto">
+//             {/* Header */}
+//             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+//               <div>
+//                 <h1 className="text-4xl font-extrabold text-indigo-600">Candy Dashboard</h1>
+//                 <p className="text-sm text-gray-600 mt-1">Colorful overview of complaints</p>
+//               </div>
+
+//               <div className="flex items-center gap-3">
+//                 <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-full shadow">
+//                   <svg className="w-5 h-5 text-pink-500" viewBox="0 0 24 24" fill="none">
+//                     <path d="M12 2v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+//                     <path d="M12 18v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+//                     <path d="M4.93 4.93l2.83 2.83" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+//                     <path d="M16.24 16.24l2.83 2.83" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+//                     <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5" />
+//                   </svg>
+//                   <div className="text-sm text-gray-700 font-medium">Unread</div>
+//                   <div className="ml-2 px-2 py-1 rounded-full bg-indigo-100 text-indigo-700 font-semibold text-sm">
+//                     {unread}
+//                   </div>
+//                 </div>
+
+//                 <button
+//                   onClick={loadData}
+//                   className="px-4 py-2 rounded-lg bg-indigo-600 text-white shadow hover:bg-indigo-700 transition"
+//                 >
+//                   Refresh
+//                 </button>
+//               </div>
+//             </div>
+
+//             {/* Analytics cards */}
+//             <div className="grid md:grid-cols-3 gap-6 mb-8">
+//               <div className="bg-white rounded-2xl shadow p-5 border-l-4 border-indigo-400">
+//                 <p className="text-xs text-gray-500">Total Complaints</p>
+//                 <div className="mt-2 text-3xl font-bold text-indigo-700">{total}</div>
+//               </div>
+//               <div className="bg-white rounded-2xl shadow p-5 border-l-4 border-pink-400">
+//                 <p className="text-xs text-gray-500">Unread</p>
+//                 <div className="mt-2 text-3xl font-bold text-pink-600">{unread}</div>
+//               </div>
+//               <div className="bg-white rounded-2xl shadow p-5 border-l-4 border-green-400">
+//                 <p className="text-xs text-gray-500">High Value (&gt;1L)</p>
+//                 <div className="mt-2 text-3xl font-bold text-green-700">{highValue}</div>
+//               </div>
+//             </div>
+
+//             {/* Charts */}
+//             <div className="grid lg:grid-cols-2 gap-6 mb-8">
+//               <div className="bg-white rounded-2xl shadow p-5">
+//                 <p className="text-sm font-semibold text-gray-800 mb-3">Cases by Station</p>
+//                 <div className="w-full h-56">
+//                   <ResponsiveContainer>
+//                     <BarChart data={stationStats}>
+//                       <CartesianGrid strokeDasharray="3 3" />
+//                       <XAxis dataKey="station" tick={{ fontSize: 12 }} />
+//                       <YAxis />
+//                       <Tooltip />
+//                       <Bar dataKey="count" fill="#6366f1" radius={[6, 6, 0, 0]} />
+//                     </BarChart>
+//                   </ResponsiveContainer>
+//                 </div>
+//               </div>
+
+//               <div className="bg-white rounded-2xl shadow p-5">
+//                 <p className="text-sm font-semibold text-gray-800 mb-3">Amount Trend (last 7)</p>
+//                 <div className="w-full h-56">
+//                   <ResponsiveContainer>
+//                     <LineChart data={weeklyTrend}>
+//                       <CartesianGrid strokeDasharray="3 3" />
+//                       <XAxis dataKey="day" tick={{ fontSize: 12 }} />
+//                       <YAxis />
+//                       <Tooltip />
+//                       <Line type="monotone" dataKey="amount" stroke="#10b981" strokeWidth={3} />
+//                     </LineChart>
+//                   </ResponsiveContainer>
+//                 </div>
+//               </div>
+//             </div>
+
+//             {/* Filters */}
+//             <div className="bg-white rounded-2xl shadow p-5 mb-6">
+//               <h4 className="text-sm font-semibold text-gray-800 mb-3">Filters</h4>
+
+//               <div className="grid lg:grid-cols-6 gap-4">
+//                 <div className="lg:col-span-2">
+//                   <label className="text-xs text-gray-500">Search</label>
+//                   <input
+//                     value={search}
+//                     onChange={handleSearch}
+//                     placeholder="Name / ID / Phone / Station"
+//                     className="w-full mt-1 px-3 py-2 border rounded-xl shadow-sm"
+//                   />
+//                 </div>
+
+//                 <div>
+//                   <label className="text-xs text-gray-500">Status</label>
+//                   <select
+//                     value={statusFilter}
+//                     onChange={(e) => {
+//                       setStatusFilter(e.target.value);
+//                       filter(search, e.target.value, stationFilter, dateFrom, dateTo, dateExact);
+//                     }}
+//                     className="w-full mt-1 px-3 py-2 border rounded-xl shadow-sm"
+//                   >
+//                     <option value="">All</option>
+//                     <option value="Pending">Pending</option>
+//                     <option value="Under Review">Under Review</option>
+//                     <option value="Closed">Closed</option>
+//                   </select>
+//                 </div>
+
+//                 <div>
+//                   <label className="text-xs text-gray-500">Police Station</label>
+//                   <select
+//                     value={stationFilter}
+//                     onChange={(e) => {
+//                       setStationFilter(e.target.value);
+//                       filter(search, statusFilter, e.target.value, dateFrom, dateTo, dateExact);
+//                     }}
+//                     className="w-full mt-1 px-3 py-2 border rounded-xl shadow-sm"
+//                   >
+//                     <option value="">All</option>
+//                     <option value="Jadavpur">Jadavpur</option>
+//                     <option value="Patuli">Patuli</option>
+//                     <option value="Netaji Nagar">Netaji Nagar</option>
+//                     <option value="Regent Park">Regent Park</option>
+//                     <option value="Garfa">Garfa</option>
+//                     <option value="Kasba">Kasba</option>
+//                     <option value="Bansdroni">Bansdroni</option>
+//                     <option value="Golf Green">Golf Green</option>
+//                     <option value="Patuli Women">Patuli Women</option>
+//                     <option value="Cyber Cell">Cyber Cell</option>
+//                   </select>
+//                 </div>
+
+//                 <div>
+//                   <label className="text-xs text-gray-500">Exact Date</label>
+//                   <input
+//                     type="date"
+//                     value={dateExact}
+//                     onChange={(e) => {
+//                       setDateExact(e.target.value);
+//                       filter(search, statusFilter, stationFilter, dateFrom, dateTo, e.target.value);
+//                     }}
+//                     className="w-full mt-1 px-3 py-2 border rounded-xl shadow-sm"
+//                   />
+//                 </div>
+
+//                 <div>
+//                   <label className="text-xs text-gray-500">From</label>
+//                   <input
+//                     type="date"
+//                     value={dateFrom}
+//                     onChange={(e) => {
+//                       setDateFrom(e.target.value);
+//                       filter(search, statusFilter, stationFilter, e.target.value, dateTo, dateExact);
+//                     }}
+//                     className="w-full mt-1 px-3 py-2 border rounded-xl shadow-sm"
+//                   />
+//                 </div>
+
+//                 <div>
+//                   <label className="text-xs text-gray-500">To</label>
+//                   <input
+//                     type="date"
+//                     value={dateTo}
+//                     onChange={(e) => {
+//                       setDateTo(e.target.value);
+//                       filter(search, statusFilter, stationFilter, dateFrom, e.target.value, dateExact);
+//                     }}
+//                     className="w-full mt-1 px-3 py-2 border rounded-xl shadow-sm"
+//                   />
+//                 </div>
+//               </div>
+//             </div>
+
+//             {/* Table list */}
+//             <div className="bg-white rounded-2xl shadow overflow-x-auto">
+//               <table className="min-w-full text-sm text-gray-700">
+//                 <colgroup>
+//                   <col style={{ width: 64 }} />
+//                   <col style={{ width: 180 }} />
+//                   <col />
+//                   <col style={{ width: 140 }} />
+//                   <col style={{ width: 130 }} />
+//                   <col style={{ width: 150 }} />
+//                   <col style={{ width: 120 }} />
+//                 </colgroup>
+
+//                 <thead className="bg-indigo-50 text-indigo-800 text-xs uppercase">
+//                   <tr>
+//                     <th className="px-3 py-3"></th>
+//                     <th className="px-4 py-3 text-left">Complaint ID</th>
+//                     <th className="px-4 py-3 text-left">Complainant</th>
+//                     <th className="px-4 py-3 text-left">Fraudster</th>
+//                     <th className="px-4 py-3 text-left">Amount</th>
+//                     <th className="px-4 py-3 text-left">Station</th>
+//                     <th className="px-4 py-3 text-left">Date</th>
+//                     <th className="px-4 py-3 text-left">Status</th>
+//                   </tr>
+//                 </thead>
+
+//                 <tbody>
+//                   {loading ? (
+//                     <tr>
+//                       <td colSpan="8" className="text-center py-8 text-gray-500">
+//                         Loading...
+//                       </td>
+//                     </tr>
+//                   ) : filtered.length === 0 ? (
+//                     <tr>
+//                       <td colSpan="8" className="text-center py-8 text-gray-400 italic">
+//                         No complaints found.
+//                       </td>
+//                     </tr>
+//                   ) : (
+//                     filtered.map((c) => (
+//                       <tr
+//                         key={c._id}
+//                         className={`border-b transition-colors duration-200 hover:bg-indigo-50 ${
+//                           !c.isRead ? "bg-pink-50" : "bg-white"
+//                         }`}
+//                         onClick={() => {
+//                           if (!c.isRead) markAsRead(c._id);
+//                           setSelectedComplaint(c);
+//                         }}
+//                       >
+//                         {/* sticky badge */}
+//                         <td
+//                           className="px-3 py-3 bg-white"
+//                           style={{ position: "sticky", left: 0, zIndex: 20, borderRight: "1px solid #eef2ff" }}
+//                         >
+//                           {!c.isRead ? (
+//                             <span className="inline-flex items-center px-2 py-1 rounded-full bg-pink-200 text-pink-800 text-xs font-semibold shadow-sm">
+//                               NEW
+//                             </span>
+//                           ) : (
+//                             <span className="inline-block w-6" />
+//                           )}
+//                         </td>
+
+//                         <td className="px-4 py-3 font-semibold text-indigo-700">{c.complaint_id}</td>
+//                         <td className="px-4 py-3">{c.complainant_name}</td>
+//                         <td className="px-4 py-3 text-indigo-600">{c.fraudster_phone || "—"}</td>
+//                         <td className="px-4 py-3 font-medium text-green-600">₹{c.total_amount?.toLocaleString() || 0}</td>
+//                         <td className="px-4 py-3">{c.police_station}</td>
+//                         <td className="px-4 py-3">{c.createdAt?.slice(0, 10)}</td>
+//                         <td className="px-4 py-3">
+//                           <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusBadgeClass(c.status)}`}>
+//                             {c.status || "Pending"}
+//                           </span>
+//                         </td>
+//                       </tr>
+//                     ))
+//                   )}
+//                 </tbody>
+//               </table>
+//             </div>
+//           </div>
+//         </div>
+//       ) : (
+//         <ComplaintFullView
+//           complaint={selectedComplaint}
+//           apiBase={API_BASE}
+//           onClose={() => setSelectedComplaint(null)}
+//           refresh={loadData}
+          
+          
+//         />
+//       )}
+//     </>
+//   );
+// }
+
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import ComplaintFullView from "../components/FilePreviewModal";
@@ -2117,14 +2537,14 @@ import {
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
 
 /**
- * Dashboard.js
- * Theme: Option C (Material "Candy")
+ * FinanceOS Light Dashboard (Premium Gradient)
+ * Replaces “Candy” with frosted cards, premium shadows,
+ * spacing rules, typography, and modern analytics design.
  */
 export default function Dashboard() {
   const [data, setData] = useState([]);
   const [filtered, setFiltered] = useState([]);
 
-  // filters
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [stationFilter, setStationFilter] = useState("");
@@ -2135,9 +2555,9 @@ export default function Dashboard() {
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // -----------------------------
-  // Fetch complaints
-  // -----------------------------
+  // --------------------------------------
+  // Load Data
+  // --------------------------------------
   const loadData = async () => {
     setLoading(true);
     try {
@@ -2148,7 +2568,7 @@ export default function Dashboard() {
       setData(sorted);
       setFiltered(sorted);
     } catch (err) {
-      console.error("Failed to load complaints:", err);
+      console.error("Failed to load:", err);
       setData([]);
       setFiltered([]);
     } finally {
@@ -2160,28 +2580,27 @@ export default function Dashboard() {
     loadData();
   }, []);
 
-  // -----------------------------
-  // Mark as read (DB + local)
-  // -----------------------------
+  // --------------------------------------
+  // Mark as Read
+  // --------------------------------------
   const markAsRead = async (id) => {
     try {
       await axios.patch(`${API_BASE}/api/complaints/${id}/mark-read`);
-      // optimistic local update
-      setData((prev) => prev.map((c) => (c._id === id ? { ...c, isRead: true } : c)));
-      setFiltered((prev) => prev.map((c) => (c._id === id ? { ...c, isRead: true } : c)));
-    } catch (err) {
-      console.error("markAsRead failed:", err);
+      setData((d) => d.map((c) => (c._id === id ? { ...c, isRead: true } : c)));
+      setFiltered((d) => d.map((c) => (c._id === id ? { ...c, isRead: true } : c)));
+    } catch (e) {
+      console.error(e);
     }
   };
 
-  // -----------------------------
-  // Filter logic
-  // -----------------------------
+  // --------------------------------------
+  // Filters
+  // --------------------------------------
   const filter = (q, status, station, from, to, exact) => {
-    let result = [...data];
+    let r = [...data];
 
     if (q) {
-      result = result.filter(
+      r = r.filter(
         (c) =>
           c.complainant_name?.toLowerCase().includes(q) ||
           c.fraudster_phone?.toLowerCase().includes(q) ||
@@ -2190,13 +2609,13 @@ export default function Dashboard() {
       );
     }
 
-    if (status) result = result.filter((c) => c.status === status);
-    if (station) result = result.filter((c) => c.police_station === station);
-    if (exact) result = result.filter((c) => c.createdAt?.slice(0, 10) === exact);
-    if (from) result = result.filter((c) => c.createdAt?.slice(0, 10) >= from);
-    if (to) result = result.filter((c) => c.createdAt?.slice(0, 10) <= to);
+    if (status) r = r.filter((c) => c.status === status);
+    if (station) r = r.filter((c) => c.police_station === station);
+    if (exact) r = r.filter((c) => c.createdAt?.slice(0, 10) === exact);
+    if (from) r = r.filter((c) => c.createdAt?.slice(0, 10) >= from);
+    if (to) r = r.filter((c) => c.createdAt?.slice(0, 10) <= to);
 
-    setFiltered(result);
+    setFiltered(r);
   };
 
   const handleSearch = (e) => {
@@ -2205,9 +2624,9 @@ export default function Dashboard() {
     filter(q, statusFilter, stationFilter, dateFrom, dateTo, dateExact);
   };
 
-  // -----------------------------
-  // Analytics helpers
-  // -----------------------------
+  // --------------------------------------
+  // Analytics
+  // --------------------------------------
   const total = data.length;
   const unread = data.filter((c) => !c.isRead).length;
   const highValue = data.filter((c) => c.total_amount > 100000).length;
@@ -2215,7 +2634,8 @@ export default function Dashboard() {
   const stationStats = Object.values(
     data.reduce((acc, c) => {
       if (!c.police_station) return acc;
-      if (!acc[c.police_station]) acc[c.police_station] = { station: c.police_station, count: 0 };
+      if (!acc[c.police_station])
+        acc[c.police_station] = { station: c.police_station, count: 0 };
       acc[c.police_station].count++;
       return acc;
     }, {})
@@ -2230,124 +2650,145 @@ export default function Dashboard() {
       amount: c.total_amount || 0,
     }));
 
-  // -----------------------------
-  // Helpers for themed classes
-  // -----------------------------
+  // --------------------------------------
+  // Badge Style
+  // --------------------------------------
   const statusBadgeClass = (status) => {
-    if (status === "Closed") return "bg-green-100 text-green-800";
-    if (status === "Under Review") return "bg-pink-100 text-pink-700";
-    return "bg-gray-100 text-gray-800";
+    if (status === "Closed") return "bg-emerald-100 text-emerald-700";
+    if (status === "Under Review") return "bg-indigo-100 text-indigo-700";
+    return "bg-amber-100 text-amber-700";
   };
 
+  // --------------------------------------
+  // Main UI
+  // --------------------------------------
   return (
     <>
       {!selectedComplaint ? (
-        <div className="min-h-screen bg-gradient-to-br from-pink-50 via-indigo-50 to-blue-50 p-6">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50 p-6">
           <div className="max-w-7xl mx-auto">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+            {/* HEADER */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
               <div>
-                <h1 className="text-4xl font-extrabold text-indigo-600">Candy Dashboard</h1>
-                <p className="text-sm text-gray-600 mt-1">Colorful overview of complaints</p>
+                <h1 className="text-4xl font-bold tracking-tight text-slate-800">
+                  FinanceOS Dashboard
+                </h1>
+                <p className="text-sm text-slate-500 mt-1">
+                  Case tracking, analytics & workflow overview
+                </p>
               </div>
 
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-full shadow">
-                  <svg className="w-5 h-5 text-pink-500" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 2v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                    <path d="M12 18v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                    <path d="M4.93 4.93l2.83 2.83" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                    <path d="M16.24 16.24l2.83 2.83" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                    <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5" />
-                  </svg>
-                  <div className="text-sm text-gray-700 font-medium">Unread</div>
-                  <div className="ml-2 px-2 py-1 rounded-full bg-indigo-100 text-indigo-700 font-semibold text-sm">
+                <div className="flex items-center gap-2 bg-white/80 backdrop-blur-xl px-4 py-2 rounded-2xl shadow border border-slate-200">
+                  <span className="text-sm font-medium text-slate-700">
+                    Unread
+                  </span>
+                  <span className="px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-sm font-semibold">
                     {unread}
-                  </div>
+                  </span>
                 </div>
 
                 <button
                   onClick={loadData}
-                  className="px-4 py-2 rounded-lg bg-indigo-600 text-white shadow hover:bg-indigo-700 transition"
+                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium shadow"
                 >
                   Refresh
                 </button>
               </div>
             </div>
 
-            {/* Analytics cards */}
-            <div className="grid md:grid-cols-3 gap-6 mb-8">
-              <div className="bg-white rounded-2xl shadow p-5 border-l-4 border-indigo-400">
-                <p className="text-xs text-gray-500">Total Complaints</p>
-                <div className="mt-2 text-3xl font-bold text-indigo-700">{total}</div>
+            {/* ANALYTICS CARDS */}
+            <div className="grid md:grid-cols-3 gap-6 mb-10">
+              <div className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-3xl shadow p-6">
+                <p className="text-xs text-slate-500">Total Complaints</p>
+                <div className="mt-2 text-4xl font-semibold text-slate-800">
+                  {total}
+                </div>
               </div>
-              <div className="bg-white rounded-2xl shadow p-5 border-l-4 border-pink-400">
-                <p className="text-xs text-gray-500">Unread</p>
-                <div className="mt-2 text-3xl font-bold text-pink-600">{unread}</div>
+
+              <div className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-3xl shadow p-6">
+                <p className="text-xs text-slate-500">Unread Cases</p>
+                <div className="mt-2 text-4xl font-semibold text-indigo-600">
+                  {unread}
+                </div>
               </div>
-              <div className="bg-white rounded-2xl shadow p-5 border-l-4 border-green-400">
-                <p className="text-xs text-gray-500">High Value (&gt;1L)</p>
-                <div className="mt-2 text-3xl font-bold text-green-700">{highValue}</div>
+
+              <div className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-3xl shadow p-6">
+                <p className="text-xs text-slate-500">High Value (&gt;1L)</p>
+                <div className="mt-2 text-4xl font-semibold text-emerald-600">
+                  {highValue}
+                </div>
               </div>
             </div>
 
-            {/* Charts */}
-            <div className="grid lg:grid-cols-2 gap-6 mb-8">
-              <div className="bg-white rounded-2xl shadow p-5">
-                <p className="text-sm font-semibold text-gray-800 mb-3">Cases by Station</p>
+            {/* CHARTS */}
+            <div className="grid lg:grid-cols-2 gap-6 mb-10">
+              <div className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-3xl shadow p-6">
+                <p className="text-sm font-semibold text-slate-700 mb-3">
+                  Complaints by Station
+                </p>
                 <div className="w-full h-56">
                   <ResponsiveContainer>
                     <BarChart data={stationStats}>
-                      <CartesianGrid strokeDasharray="3 3" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                       <XAxis dataKey="station" tick={{ fontSize: 12 }} />
                       <YAxis />
                       <Tooltip />
-                      <Bar dataKey="count" fill="#6366f1" radius={[6, 6, 0, 0]} />
+                      <Bar dataKey="count" fill="#6366f1" radius={[8, 8, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl shadow p-5">
-                <p className="text-sm font-semibold text-gray-800 mb-3">Amount Trend (last 7)</p>
+              <div className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-3xl shadow p-6">
+                <p className="text-sm font-semibold text-slate-700 mb-3">
+                  Amount Trend (Last 7)
+                </p>
                 <div className="w-full h-56">
                   <ResponsiveContainer>
                     <LineChart data={weeklyTrend}>
-                      <CartesianGrid strokeDasharray="3 3" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                       <XAxis dataKey="day" tick={{ fontSize: 12 }} />
                       <YAxis />
                       <Tooltip />
-                      <Line type="monotone" dataKey="amount" stroke="#10b981" strokeWidth={3} />
+                      <Line
+                        type="monotone"
+                        dataKey="amount"
+                        stroke="#10b981"
+                        strokeWidth={3}
+                      />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
               </div>
             </div>
 
-            {/* Filters */}
-            <div className="bg-white rounded-2xl shadow p-5 mb-6">
-              <h4 className="text-sm font-semibold text-gray-800 mb-3">Filters</h4>
+            {/* FILTERS */}
+            <div className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-3xl shadow p-6 mb-8">
+              <h4 className="text-sm font-semibold text-slate-700 mb-4">
+                Filters
+              </h4>
 
               <div className="grid lg:grid-cols-6 gap-4">
                 <div className="lg:col-span-2">
-                  <label className="text-xs text-gray-500">Search</label>
+                  <label className="text-xs text-slate-500">Search</label>
                   <input
                     value={search}
                     onChange={handleSearch}
                     placeholder="Name / ID / Phone / Station"
-                    className="w-full mt-1 px-3 py-2 border rounded-xl shadow-sm"
+                    className="w-full mt-1 px-4 py-2.5 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-indigo-300 focus:outline-none shadow-sm"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs text-gray-500">Status</label>
+                  <label className="text-xs text-slate-500">Status</label>
                   <select
                     value={statusFilter}
                     onChange={(e) => {
                       setStatusFilter(e.target.value);
                       filter(search, e.target.value, stationFilter, dateFrom, dateTo, dateExact);
                     }}
-                    className="w-full mt-1 px-3 py-2 border rounded-xl shadow-sm"
+                    className="w-full mt-1 px-4 py-2.5 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-indigo-300 shadow-sm"
                   >
                     <option value="">All</option>
                     <option value="Pending">Pending</option>
@@ -2357,31 +2798,26 @@ export default function Dashboard() {
                 </div>
 
                 <div>
-                  <label className="text-xs text-gray-500">Police Station</label>
+                  <label className="text-xs text-slate-500">Police Station</label>
                   <select
                     value={stationFilter}
                     onChange={(e) => {
                       setStationFilter(e.target.value);
                       filter(search, statusFilter, e.target.value, dateFrom, dateTo, dateExact);
                     }}
-                    className="w-full mt-1 px-3 py-2 border rounded-xl shadow-sm"
+                    className="w-full mt-1 px-4 py-2.5 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-indigo-300 shadow-sm"
                   >
                     <option value="">All</option>
                     <option value="Jadavpur">Jadavpur</option>
                     <option value="Patuli">Patuli</option>
-                    <option value="Netaji Nagar">Netaji Nagar</option>
-                    <option value="Regent Park">Regent Park</option>
-                    <option value="Garfa">Garfa</option>
-                    <option value="Kasba">Kasba</option>
-                    <option value="Bansdroni">Bansdroni</option>
-                    <option value="Golf Green">Golf Green</option>
-                    <option value="Patuli Women">Patuli Women</option>
                     <option value="Cyber Cell">Cyber Cell</option>
+                    <option value="Netaji Nagar">Netaji Nagar</option>
+                    <option value="Kasba">Kasba</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="text-xs text-gray-500">Exact Date</label>
+                  <label className="text-xs text-slate-500">Exact Date</label>
                   <input
                     type="date"
                     value={dateExact}
@@ -2389,12 +2825,12 @@ export default function Dashboard() {
                       setDateExact(e.target.value);
                       filter(search, statusFilter, stationFilter, dateFrom, dateTo, e.target.value);
                     }}
-                    className="w-full mt-1 px-3 py-2 border rounded-xl shadow-sm"
+                    className="w-full mt-1 px-4 py-2.5 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-indigo-300 shadow-sm"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs text-gray-500">From</label>
+                  <label className="text-xs text-slate-500">From</label>
                   <input
                     type="date"
                     value={dateFrom}
@@ -2402,12 +2838,12 @@ export default function Dashboard() {
                       setDateFrom(e.target.value);
                       filter(search, statusFilter, stationFilter, e.target.value, dateTo, dateExact);
                     }}
-                    className="w-full mt-1 px-3 py-2 border rounded-xl shadow-sm"
+                    className="w-full mt-1 px-4 py-2.5 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-indigo-300 shadow-sm"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs text-gray-500">To</label>
+                  <label className="text-xs text-slate-500">To</label>
                   <input
                     type="date"
                     value={dateTo}
@@ -2415,26 +2851,26 @@ export default function Dashboard() {
                       setDateTo(e.target.value);
                       filter(search, statusFilter, stationFilter, dateFrom, e.target.value, dateExact);
                     }}
-                    className="w-full mt-1 px-3 py-2 border rounded-xl shadow-sm"
+                    className="w-full mt-1 px-4 py-2.5 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-indigo-300 shadow-sm"
                   />
                 </div>
               </div>
             </div>
 
-            {/* Table list */}
-            <div className="bg-white rounded-2xl shadow overflow-x-auto">
-              <table className="min-w-full text-sm text-gray-700">
+            {/* TABLE */}
+            <div className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-3xl shadow overflow-x-auto">
+              <table className="min-w-full text-sm text-slate-700">
                 <colgroup>
-                  <col style={{ width: 64 }} />
+                  <col style={{ width: 60 }} />
+                  <col style={{ width: 170 }} />
                   <col style={{ width: 180 }} />
-                  <col />
                   <col style={{ width: 140 }} />
                   <col style={{ width: 130 }} />
                   <col style={{ width: 150 }} />
                   <col style={{ width: 120 }} />
                 </colgroup>
 
-                <thead className="bg-indigo-50 text-indigo-800 text-xs uppercase">
+                <thead className="bg-slate-100 text-slate-700 text-xs uppercase">
                   <tr>
                     <th className="px-3 py-3"></th>
                     <th className="px-4 py-3 text-left">Complaint ID</th>
@@ -2450,13 +2886,13 @@ export default function Dashboard() {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan="8" className="text-center py-8 text-gray-500">
+                      <td colSpan="8" className="text-center py-8 text-slate-500">
                         Loading...
                       </td>
                     </tr>
                   ) : filtered.length === 0 ? (
                     <tr>
-                      <td colSpan="8" className="text-center py-8 text-gray-400 italic">
+                      <td colSpan="8" className="text-center py-8 text-slate-400 italic">
                         No complaints found.
                       </td>
                     </tr>
@@ -2464,21 +2900,26 @@ export default function Dashboard() {
                     filtered.map((c) => (
                       <tr
                         key={c._id}
-                        className={`border-b transition-colors duration-200 hover:bg-indigo-50 ${
-                          !c.isRead ? "bg-pink-50" : "bg-white"
+                        className={`border-b hover:bg-indigo-50/40 transition cursor-pointer ${
+                          !c.isRead ? "bg-indigo-50/30" : "bg-white/80"
                         }`}
                         onClick={() => {
                           if (!c.isRead) markAsRead(c._id);
                           setSelectedComplaint(c);
                         }}
                       >
-                        {/* sticky badge */}
+                        {/* Sticky NEW badge */}
                         <td
-                          className="px-3 py-3 bg-white"
-                          style={{ position: "sticky", left: 0, zIndex: 20, borderRight: "1px solid #eef2ff" }}
+                          className="px-3 py-3 bg-white/70 backdrop-blur-xl"
+                          style={{
+                            position: "sticky",
+                            left: 0,
+                            zIndex: 20,
+                            borderRight: "1px solid #e2e8f0",
+                          }}
                         >
                           {!c.isRead ? (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full bg-pink-200 text-pink-800 text-xs font-semibold shadow-sm">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full bg-indigo-200 text-indigo-800 text-xs font-semibold shadow-sm">
                               NEW
                             </span>
                           ) : (
@@ -2486,14 +2927,26 @@ export default function Dashboard() {
                           )}
                         </td>
 
-                        <td className="px-4 py-3 font-semibold text-indigo-700">{c.complaint_id}</td>
+                        <td className="px-4 py-3 font-semibold text-indigo-700">
+                          {c.complaint_id}
+                        </td>
                         <td className="px-4 py-3">{c.complainant_name}</td>
-                        <td className="px-4 py-3 text-indigo-600">{c.fraudster_phone || "—"}</td>
-                        <td className="px-4 py-3 font-medium text-green-600">₹{c.total_amount?.toLocaleString() || 0}</td>
+                        <td className="px-4 py-3 text-indigo-600">
+                          {c.fraudster_phone || "—"}
+                        </td>
+                        <td className="px-4 py-3 font-medium text-emerald-700">
+                          ₹{c.total_amount?.toLocaleString() || 0}
+                        </td>
                         <td className="px-4 py-3">{c.police_station}</td>
-                        <td className="px-4 py-3">{c.createdAt?.slice(0, 10)}</td>
                         <td className="px-4 py-3">
-                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusBadgeClass(c.status)}`}>
+                          {c.createdAt?.slice(0, 10)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-semibold ${statusBadgeClass(
+                              c.status
+                            )}`}
+                          >
                             {c.status || "Pending"}
                           </span>
                         </td>
@@ -2511,10 +2964,9 @@ export default function Dashboard() {
           apiBase={API_BASE}
           onClose={() => setSelectedComplaint(null)}
           refresh={loadData}
-          
-          
         />
       )}
     </>
   );
 }
+
