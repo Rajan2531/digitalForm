@@ -2155,648 +2155,20 @@
 //   );
 // }
 
-// import React, { useEffect, useMemo, useState } from "react";
-// import axios from "axios";
-
-// /**
-//  * ComplaintFullView  —  CRM UI + Highlighted Labels (STYLE 1)
-//  *
-//  * Includes:
-//  * - Style-1 Highlight Labels (indigo soft highlight)
-//  * - CRM card-based layout
-//  * - Accordion with animation
-//  * - Sorting in transactions
-//  * - Print-friendly layout
-//  * - Inline icons (no external dependency)
-//  * - Full UI polish
-//  */
-
-// export default function ComplaintFullView({ complaint, apiBase, onClose, refresh }) {
-//   const [editMode, setEditMode] = useState(false);
-//   const [form, setForm] = useState(complaint ? JSON.parse(JSON.stringify(complaint)) : {});
-//   const [saving, setSaving] = useState(false);
-
-//   // accordion + sort
-//   const [bankUI, setBankUI] = useState(() =>
-//     (complaint?.banks || []).map(() => ({ expanded: true, sortBy: "date", sortDir: "desc" }))
-//   );
-
-//   useEffect(() => {
-//     setForm(complaint ? JSON.parse(JSON.stringify(complaint)) : {});
-//     setBankUI((complaint?.banks || []).map(() => ({ expanded: true, sortBy: "date", sortDir: "desc" })));
-//   }, [complaint]);
-
-//   useEffect(() => {
-//     setBankUI((prev) => {
-//       const count = form.banks?.length || 0;
-//       if (prev.length === count) return prev;
-//       if (prev.length < count) {
-//         return [...prev, ...Array(count - prev.length).fill({ expanded: true, sortBy: "date", sortDir: "desc" })];
-//       }
-//       return prev.slice(0, count);
-//     });
-//   }, [form.banks]);
-
-//   const updateField = (key, value) => setForm((f) => ({ ...f, [key]: value }));
-
-//   // ---------------------------------------
-//   // BANK LOGIC
-//   // ---------------------------------------
-//   const addBank = () => {
-//     setForm((f) => ({
-//       ...f,
-//       banks: [
-//         ...(f.banks || []),
-//         { bank_name: "", account_no: "", ifsc: "", transactions: [] },
-//       ],
-//     }));
-//   };
-
-//   const removeBank = (bankIndex) => {
-//     setForm((f) => ({
-//       ...f,
-//       banks: (f.banks || []).filter((_, i) => i !== bankIndex),
-//     }));
-//     setBankUI((s) => s.filter((_, i) => i !== bankIndex));
-//   };
-
-//   const updateBankField = (bankIndex, key, value) => {
-//     setForm((f) => {
-//       const banks = [...(f.banks || [])];
-//       banks[bankIndex] = { ...banks[bankIndex], [key]: value };
-//       return { ...f, banks };
-//     });
-//   };
-
-//   const addTransaction = (bankIndex) => {
-//     setForm((f) => {
-//       const banks = [...(f.banks || [])];
-//       const bank = banks[bankIndex] || { transactions: [] };
-//       bank.transactions = [...(bank.transactions || []), { amount: "", date: "", time: "", refNo: "" }];
-//       banks[bankIndex] = bank;
-//       return { ...f, banks };
-//     });
-//   };
-
-//   const removeTransaction = (bankIndex, txIndex) => {
-//     setForm((f) => {
-//       const banks = [...(f.banks || [])];
-//       const bank = banks[bankIndex];
-//       bank.transactions = bank.transactions.filter((_, i) => i !== txIndex);
-//       banks[bankIndex] = bank;
-//       return { ...f, banks };
-//     });
-//   };
-
-//   const updateTransactionField = (bankIndex, txIndex, key, value) => {
-//     setForm((f) => {
-//       const banks = [...(f.banks || [])];
-//       const bank = banks[bankIndex];
-//       const txs = [...(bank.transactions || [])];
-//       txs[txIndex] = { ...txs[txIndex], [key]: value };
-//       bank.transactions = txs;
-//       banks[bankIndex] = bank;
-//       return { ...f, banks };
-//     });
-//   };
-
-//   // ---------------------------------------
-//   // SAVE
-//   // ---------------------------------------
-//   const saveChanges = async () => {
-//     try {
-//       setSaving(true);
-//       await axios.patch(`${apiBase}/api/complaints/${form._id}/update`, form);
-//       setEditMode(false);
-//       refresh?.();
-//       alert("Updated successfully");
-//     } catch (err) {
-//       console.error(err);
-//       alert("Failed to save. Check console.");
-//     } finally {
-//       setSaving(false);
-//     }
-//   };
-
-//   // ---------------------------------------
-//   // SORTING HELPERS
-//   // ---------------------------------------
-//   const toggleSort = (bankIndex, column) => {
-//     setBankUI((prev) =>
-//       prev.map((item, i) => {
-//         if (i !== bankIndex) return item;
-
-//         if (item.sortBy === column) {
-//           return { ...item, sortDir: item.sortDir === "asc" ? "desc" : "asc" };
-//         }
-//         return { ...item, sortBy: column, sortDir: "desc" };
-//       })
-//     );
-//   };
-
-//   const getSortedTransactions = (bankIndex, txList) => {
-//     const ui = bankUI[bankIndex];
-//     const list = [...(txList || [])];
-//     const { sortBy, sortDir } = ui;
-//     const dir = sortDir === "asc" ? 1 : -1;
-
-//     return list.sort((a, b) => {
-//       if (sortBy === "amount") return (Number(a.amount) - Number(b.amount)) * dir;
-//       if (sortBy === "refNo") return (a.refNo || "").localeCompare(b.refNo || "") * dir;
-//       if (sortBy === "time") return (a.time || "").localeCompare(b.time || "") * dir;
-//       if (sortBy === "date") {
-//         const da = a.date ? new Date(a.date).getTime() : 0;
-//         const db = b.date ? new Date(b.date).getTime() : 0;
-//         return (da - db) * dir;
-//       }
-//       return 0;
-//     });
-//   };
-
-//   // ---------------------------------------
-//   // LABEL STYLE 1
-//   // ---------------------------------------
-//   const FieldLabel = ({ children }) => (
-//     <div className="inline-block mb-1 px-2 py-0.5 bg-indigo-50 text-indigo-700 text-s font-bold rounded">
-//       {children}
-//     </div>
-//   );
-
-//   // MASK ACCOUNT
-//   const mask = (acc) => {
-//     if (!acc) return "—";
-//     if (acc.length < 8) return acc;
-//     return acc.slice(0, 4) + " •••• " + acc.slice(-2);
-//   };
-
-//   // ICONS (inline SVG)
-//   const Chevron = ({ open }) => (
-//     <svg className={`w-4 h-4 transform transition ${open ? "rotate-180" : ""}`} viewBox="0 0 20 20" fill="none">
-//       <path d="M6 8l4 4 4-4" stroke="currentColor" strokeWidth="1.5"/>
-//     </svg>
-//   );
-
-//   const SortIcon = () => (
-//     <svg className="w-3.5 h-3.5 text-slate-400" viewBox="0 0 20 20">
-//       <path d="M7 7h6M7 10h4M7 13h2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-//     </svg>
-//   );
-
-//   return (
-//     <div className="fixed inset-0 bg-slate-50 overflow-y-auto z-50">
-//       {/* Header */}
-//       <div className="sticky top-0 bg-white border-b px-6 py-3 flex justify-between items-center z-40">
-//         <div>
-//           <div className="text-2xl font-bold text-slate-900">{form.complaint_id}</div>
-//           <div className="text-xs text-slate-500">
-//             {form.createdAt ? new Date(form.createdAt).toLocaleString() : ""}
-//           </div>
-//         </div>
-
-//         <div className="flex gap-2">
-//           <button onClick={onClose} className="px-3 py-2 text-sm bg-slate-100 rounded-md">
-//             ← Back
-//           </button>
-
-//           <button onClick={() => window.print()} className="px-3 py-2 text-sm border rounded-md">
-//             Print
-//           </button>
-
-//           <button
-//             onClick={() => setEditMode((s) => !s)}
-//             className={`px-3 py-2 text-sm text-white rounded-md ${
-//               editMode ? "bg-rose-600" : "bg-indigo-600"
-//             }`}
-//           >
-//             {editMode ? "Cancel" : "Edit"}
-//           </button>
-//         </div>
-//       </div>
-
-//       {/* BODY */}
-//       <div className="max-w-7xl mx-auto p-6 space-y-8">
-//         {/* --------------------------------------- */}
-//         {/* TOP CARDS */}
-//         {/* --------------------------------------- */}
-//         <div className="grid lg:grid-cols-3 gap-6">
-//           {/* LEFT: COMPLAINT INFO */}
-//           <div className="lg:col-span-2 bg-white p-6 rounded-xl border shadow-sm">
-//             <FieldLabel>Complaint Information</FieldLabel>
-
-//             <div className="mt-4 grid sm:grid-cols-2 gap-4">
-//               {/* GD Number */}
-//               <div>
-//                 <FieldLabel>GD Number</FieldLabel>
-//                 {editMode ? (
-//                   <input className="w-full px-3 py-2 border rounded-md bg-slate-50"
-//                     value={form.gd_case_no || ""}
-//                     onChange={(e) => updateField("gd_case_no", e.target.value)}
-//                   />
-//                 ) : (
-//                   <div className="font-medium">{form.gd_case_no || "—"}</div>
-//                 )}
-//               </div>
-
-//               {/* Police Station */}
-//               <div>
-//                 <FieldLabel>Police Station</FieldLabel>
-//                 {editMode ? (
-//                   <input className="w-full px-3 py-2 border rounded-md bg-slate-50"
-//                     value={form.police_station || ""}
-//                     onChange={(e) => updateField("police_station", e.target.value)}
-//                   />
-//                 ) : (
-//                   <div className="font-medium">{form.police_station || "—"}</div>
-//                 )}
-//               </div>
-
-//               {/* Amount */}
-//               <div>
-//                 <FieldLabel>Fraud Amount</FieldLabel>
-//                 {editMode ? (
-//                   <input type="number" className="w-full px-3 py-2 border rounded-md bg-slate-50"
-//                     value={form.total_amount || ""}
-//                     onChange={(e) => updateField("total_amount", e.target.value)}
-//                   />
-//                 ) : (
-//                   <div className="font-bold text-lg text-emerald-700">
-//                     ₹{form.total_amount?.toLocaleString() || 0}
-//                   </div>
-//                 )}
-//               </div>
-
-//               {/* Fraudster Phone */}
-//               <div>
-//                 <FieldLabel>Fraudster Phone</FieldLabel>
-//                 {editMode ? (
-//                   <input className="w-full px-3 py-2 border rounded-md bg-slate-50"
-//                     value={form.fraudster_phone || ""}
-//                     onChange={(e) => updateField("fraudster_phone", e.target.value)}
-//                   />
-//                 ) : (
-//                   <div className="font-medium">{form.fraudster_phone || "—"}</div>
-//                 )}
-//               </div>
-//             </div>
-
-//             {/* Description */}
-//             <div className="mt-6">
-//               <FieldLabel>Description</FieldLabel>
-//               <textarea
-//                 className="w-full p-3 bg-slate-50 border rounded-md font-semibold "
-//                 rows={5}
-//                 readOnly={!editMode}
-//                 value={form.fraud_description || ""}
-//                 onChange={(e) => updateField("fraud_description", e.target.value)}
-//               />
-//             </div>
-//           </div>
-
-//           {/* RIGHT: COMPLAINANT */}
-//           <div className="bg-white p-6 rounded-xl border shadow-sm">
-//             <FieldLabel>Complainant</FieldLabel>
-
-//             <div className="mt-4 space-y-3">
-//               <div>
-//                 <FieldLabel>Name</FieldLabel>
-//                 <input readOnly={!editMode}
-//                   value={form.complainant_name || ""}
-//                   onChange={(e) => updateField("complainant_name", e.target.value)}
-//                   className={`w-full px-3 py-2 border rounded-md ${editMode ? "bg-slate-50" : ""}`}
-//                 />
-//               </div>
-
-//               <div>
-//                 <FieldLabel>Relation</FieldLabel>
-//                 <input readOnly={!editMode}
-//                   value={form.relation || ""}
-//                   onChange={(e) => updateField("relation", e.target.value)}
-//                   className={`w-full px-3 py-2 border rounded-md ${editMode ? "bg-slate-50" : ""}`}
-//                 />
-//               </div>
-
-//               <div>
-//                 <FieldLabel>Phone</FieldLabel>
-//                 <input readOnly={!editMode}
-//                   value={form.phone_no || ""}
-//                   onChange={(e) => updateField("phone_no", e.target.value)}
-//                   className={`w-full px-3 py-2 border rounded-md ${editMode ? "bg-slate-50" : ""}`}
-//                 />
-//               </div>
-
-//               <div>
-//                 <FieldLabel>Email</FieldLabel>
-//                 <input readOnly={!editMode}
-//                   value={form.email_id || ""}
-//                   onChange={(e) => updateField("email_id", e.target.value)}
-//                   className={`w-full px-3 py-2 border rounded-md ${editMode ? "bg-slate-50" : ""}`}
-//                 />
-//               </div>
-
-//               <div className="grid grid-cols-2 gap-3">
-//                 <div>
-//                   <FieldLabel>DOB</FieldLabel>
-//                   <input type="date" readOnly={!editMode}
-//                     value={form.dob || ""}
-//                     onChange={(e) => updateField("dob", e.target.value)}
-//                     className={`w-full px-3 py-2 border rounded-md ${editMode ? "bg-slate-50" : ""}`}
-//                   />
-//                 </div>
-
-//                 <div>
-//                   <FieldLabel>Age</FieldLabel>
-//                   <input type="number" readOnly={!editMode}
-//                     value={form.age || ""}
-//                     onChange={(e) => updateField("age", e.target.value)}
-//                     className={`w-full px-3 py-2 border rounded-md ${editMode ? "bg-slate-50" : ""}`}
-//                   />
-//                 </div>
-//               </div>
-
-//               <div>
-//                 <FieldLabel>Sex</FieldLabel>
-//                 <select disabled={!editMode}
-//                   value={form.sex || ""}
-//                   onChange={(e) => updateField("sex", e.target.value)}
-//                   className={`w-full px-3 py-2 border rounded-md ${editMode ? "bg-slate-50" : ""}`}>
-//                   <option value="">Select</option>
-//                   <option>Male</option>
-//                   <option>Female</option>
-//                   <option>Other</option>
-//                 </select>
-//               </div>
-//             </div>
-//           </div>
-//         </div>
-
-//         {/* --------------------------------------- */}
-//         {/* BANKS SECTION */}
-//         {/* --------------------------------------- */}
-//         <div className="space-y-4">
-//           <div className="flex justify-between">
-//             <FieldLabel>Bank & Transaction Details</FieldLabel>
-//             {editMode && (
-//               <button onClick={addBank} className="px-3 py-2 bg-indigo-600 text-white text-sm rounded-md">
-//                 + Add Bank
-//               </button>
-//             )}
-//           </div>
-
-//           {(form.banks || []).map((bank, bi) => {
-//             const ui = bankUI[bi];
-//             const sortedTx = getSortedTransactions(bi, bank.transactions || []);
-
-//             return (
-//               <div key={bi} className="bg-white border rounded-xl shadow-sm overflow-hidden">
-//                 {/* Summary */}
-//                 <div className="px-5 py-4 flex justify-between items-center">
-//                   <div>
-//                     <div className="font-semibold text-slate-900">
-//                       {bank.bank_name || `Bank ${bi + 1}`}
-//                     </div>
-//                     <div className="text-xs text-slate-500">
-//                       {mask(bank.account_no)} • {bank.ifsc || "N/A"}
-//                     </div>
-//                   </div>
-
-//                   <div className="flex gap-3">
-//                     {editMode && (
-//                       <button onClick={() => removeBank(bi)} className="px-3 py-1 bg-rose-100 text-rose-700 rounded-md text-sm">
-//                         Remove
-//                       </button>
-//                     )}
-
-//                     <button
-//                       onClick={() =>
-//                         setBankUI((s) =>
-//                           s.map((x, i) => (i === bi ? { ...x, expanded: !x.expanded } : x))
-//                         )
-//                       }
-//                       className="px-3 py-1 bg-slate-100 rounded-md text-sm flex items-center gap-2"
-//                     >
-//                       <Chevron open={ui.expanded} />
-//                       {ui.expanded ? "Collapse" : "Expand"}
-//                     </button>
-//                   </div>
-//                 </div>
-
-//                 {/* PANEL */}
-//                 <div
-//                   className={`px-5 transition-all duration-300 overflow-hidden ${
-//                     ui.expanded ? "max-h-[1000px] py-5" : "max-h-0 py-0"
-//                   }`}
-//                 >
-//                   {/* Bank Fields */}
-//                   <div className="grid md:grid-cols-3 gap-4">
-//                     <div>
-//                       <FieldLabel>Bank Name</FieldLabel>
-//                       <input readOnly={!editMode}
-//                         value={bank.bank_name || ""}
-//                         onChange={(e) => updateBankField(bi, "bank_name", e.target.value)}
-//                         className={`w-full px-3 py-2 border rounded-md ${
-//                           editMode ? "bg-slate-50" : ""
-//                         }`}
-//                       />
-//                     </div>
-
-//                     <div>
-//                       <FieldLabel>Account Number</FieldLabel>
-//                       <input readOnly={!editMode}
-//                         value={bank.account_no || ""}
-//                         onChange={(e) => updateBankField(bi, "account_no", e.target.value)}
-//                         className={`w-full px-3 py-2 border rounded-md ${
-//                           editMode ? "bg-slate-50" : ""
-//                         }`}
-//                       />
-//                     </div>
-
-//                     <div>
-//                       <FieldLabel>IFSC</FieldLabel>
-//                       <input readOnly={!editMode}
-//                         value={bank.ifsc || ""}
-//                         onChange={(e) => updateBankField(bi, "ifsc", e.target.value)}
-//                         className={`w-full px-3 py-2 border rounded-md ${
-//                           editMode ? "bg-slate-50" : ""
-//                         }`}
-//                       />
-//                     </div>
-//                   </div>
-
-//                   {/* Transactions */}
-//                   <div className="mt-6">
-//                     <div className="flex justify-between mb-3">
-//                       <FieldLabel>Transactions</FieldLabel>
-//                       {editMode && (
-//                         <button
-//                           onClick={() => addTransaction(bi)}
-//                           className="px-3 py-2 text-sm bg-emerald-600 text-white rounded"
-//                         >
-//                           + Add Tx
-//                         </button>
-//                       )}
-//                     </div>
-
-//                     {/* Table */}
-//                     <div className="overflow-x-auto border rounded-md">
-//                       <table className="w-full text-sm">
-//                         <thead className="bg-slate-100">
-//                           <tr>
-//                             {["refNo", "date", "time", "amount"].map((col) => (
-//                               <th key={col} className="px-4 py-2 text-left cursor-pointer" onClick={() => toggleSort(bi, col)}>
-//                                 <div className="flex items-center gap-1">
-//                                   {col === "refNo" && "Transaction Id/ UTR no"}
-//                                   {col === "date" && "Date"}
-//                                   {col === "time" && "Time"}
-//                                   {col === "amount" && "Amount"}
-//                                   <SortIcon />
-//                                 </div>
-//                               </th>
-//                             ))}
-//                             {editMode && <th className="px-4 py-2">Actions</th>}
-//                           </tr>
-//                         </thead>
-
-//                         <tbody>
-//                           {sortedTx.map((tx, ti) => (
-//                             <tr key={ti} className="border-t bg-yellow-50 font-bold">
-//                               {/* Reference */}
-//                               <td className="px-4 py-2 font-semibold">
-//                                 {editMode ? (
-//                                   <input className="w-full px-2 py-1 border rounded-md"
-//                                     value={tx.refNo || ""}
-//                                     onChange={(e) => updateTransactionField(bi, ti, "refNo", e.target.value)}
-//                                   />
-//                                 ) : (
-//                                   tx.refNo || "—"
-//                                 )}
-//                               </td>
-
-//                               {/* Date */}
-//                               <td className="px-4 py-2">
-//                                 {editMode ? (
-//                                   <input type="date" className="w-full px-2 py-1 border rounded-md"
-//                                     value={tx.date || ""}
-//                                     onChange={(e) => updateTransactionField(bi, ti, "date", e.target.value)}
-//                                   />
-//                                 ) : (
-//                                   tx.date || "—"
-//                                 )}
-//                               </td>
-
-//                               {/* Time */}
-//                               <td className="px-4 py-2">
-//                                 {editMode ? (
-//                                   <input type="time" className="w-full px-2 py-1 border rounded-md"
-//                                     value={tx.time || ""}
-//                                     onChange={(e) => updateTransactionField(bi, ti, "time", e.target.value)}
-//                                   />
-//                                 ) : (
-//                                   tx.time || "—"
-//                                 )}
-//                               </td>
-
-//                               {/* Amount */}
-//                               <td className="px-4 py-2 text-centre font-semibold text-emerald-700">
-//                                 {editMode ? (
-//                                   <input type="number" className="w-full px-2 py-1 border rounded-md text-right"
-//                                     value={tx.amount || ""}
-//                                     onChange={(e) => updateTransactionField(bi, ti, "amount", e.target.value)}
-//                                   />
-//                                 ) : (
-//                                   `₹${Number(tx.amount || 0).toLocaleString()}`
-//                                 )}
-//                               </td>
-
-//                               {/* Remove */}
-//                               {editMode && (
-//                                 <td className="px-4 py-2">
-//                                   <button onClick={() => removeTransaction(bi, ti)} className="px-3 py-1 bg-rose-200 text-rose-800 rounded-md">
-//                                     Remove
-//                                   </button>
-//                                 </td>
-//                               )}
-//                             </tr>
-//                           ))}
-//                         </tbody>
-//                       </table>
-//                     </div>
-//                   </div>
-//                 </div>
-//               </div>
-//             );
-//           })}
-//         </div>
-
-//         {/* --------------------------------------- */}
-//         {/* DOCUMENTS */}
-//         {/* --------------------------------------- */}
-//         <div className="bg-white p-6 border rounded-xl shadow-sm">
-//           <FieldLabel>Uploaded Documents</FieldLabel>
-
-//           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-//             {!form.files && <div className="text-slate-500 italic">No documents available.</div>}
-
-//             {form.files &&
-//               Object.entries(form.files).flatMap(([key, val]) =>
-//                 (Array.isArray(val) ? val : [val]).map((file, i) => (
-//                   <a key={i} href={`${apiBase}/uploads/${file}`} className="flex items-center gap-4 p-4 bg-slate-50 border rounded-lg hover:bg-white">
-//                     <div className="w-12 h-12 flex items-center justify-center border rounded bg-white text-indigo-600">
-//                       📄
-//                     </div>
-//                     <div>
-//                       <div className="font-semibold">{key.replace(/_/g, " ").toUpperCase()}</div>
-//                       <div className="text-xs text-slate-500">Document {i + 1}</div>
-//                     </div>
-//                     <div className="ml-auto text-indigo-600 text-sm">View →</div>
-//                   </a>
-//                 ))
-//               )}
-//           </div>
-//         </div>
-
-//         {/* --------------------------------------- */}
-//         {/* SAVE BUTTON */}
-//         {/* --------------------------------------- */}
-//         {editMode && (
-//           <div className="flex justify-end gap-3">
-//             <button
-//               onClick={() => {
-//                 setEditMode(false);
-//                 setForm(complaint ? JSON.parse(JSON.stringify(complaint)) : {});
-//                 setBankUI((complaint?.banks || []).map(() => ({ expanded: true, sortBy: "date", sortDir: "desc" })));
-//               }}
-//               className="px-4 py-2 bg-white border rounded-md"
-//             >
-//               Cancel
-//             </button>
-
-//             <button
-//               onClick={saveChanges}
-//               disabled={saving}
-//               className="px-4 py-2 bg-emerald-600 text-white rounded-md"
-//             >
-//               {saving ? "Saving..." : "Save Changes"}
-//             </button>
-//           </div>
-//         )}
-//       </div>
-//     </div>
-//   );
-// }
-
-
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 
 /**
- * ComplaintFullView  —  FinanceOS LIGHT UI
+ * ComplaintFullView  —  CRM UI + Highlighted Labels (STYLE 1)
  *
- * - Frosted white cards (bg-white/80 + backdrop-blur-xl)
- * - Soft borders, rounded-2xl/3xl, premium spacing
- * - Pill labels with subtle highlight
- * - Symmetric banking section layout
- * - Clean table with better alignment
- * - Print-friendly + responsive
+ * Includes:
+ * - Style-1 Highlight Labels (indigo soft highlight)
+ * - CRM card-based layout
+ * - Accordion with animation
+ * - Sorting in transactions
+ * - Print-friendly layout
+ * - Inline icons (no external dependency)
+ * - Full UI polish
  */
 
 export default function ComplaintFullView({ complaint, apiBase, onClose, refresh }) {
@@ -2819,14 +2191,7 @@ export default function ComplaintFullView({ complaint, apiBase, onClose, refresh
       const count = form.banks?.length || 0;
       if (prev.length === count) return prev;
       if (prev.length < count) {
-        return [
-          ...prev,
-          ...Array(count - prev.length).fill({
-            expanded: true,
-            sortBy: "date",
-            sortDir: "desc",
-          }),
-        ];
+        return [...prev, ...Array(count - prev.length).fill({ expanded: true, sortBy: "date", sortDir: "desc" })];
       }
       return prev.slice(0, count);
     });
@@ -2867,10 +2232,7 @@ export default function ComplaintFullView({ complaint, apiBase, onClose, refresh
     setForm((f) => {
       const banks = [...(f.banks || [])];
       const bank = banks[bankIndex] || { transactions: [] };
-      bank.transactions = [
-        ...(bank.transactions || []),
-        { amount: "", date: "", time: "", refNo: "" },
-      ];
+      bank.transactions = [...(bank.transactions || []), { amount: "", date: "", time: "", refNo: "" }];
       banks[bankIndex] = bank;
       return { ...f, banks };
     });
@@ -2952,10 +2314,10 @@ export default function ComplaintFullView({ complaint, apiBase, onClose, refresh
   };
 
   // ---------------------------------------
-  // LABEL STYLE: FinanceOS Light
+  // LABEL STYLE 1
   // ---------------------------------------
   const FieldLabel = ({ children }) => (
-    <div className="inline-flex items-center mb-1 px-2.5 py-0.5 rounded-full bg-slate-100 text-[11px] font-semibold tracking-wide text-slate-700 uppercase">
+    <div className="inline-block mb-1 px-2 py-0.5 bg-indigo-50 text-indigo-700 text-s font-bold rounded">
       {children}
     </div>
   );
@@ -2969,322 +2331,194 @@ export default function ComplaintFullView({ complaint, apiBase, onClose, refresh
 
   // ICONS (inline SVG)
   const Chevron = ({ open }) => (
-    <svg
-      className={`w-4 h-4 transform transition duration-200 ${
-        open ? "rotate-180" : ""
-      }`}
-      viewBox="0 0 20 20"
-      fill="none"
-    >
-      <path d="M6 8l4 4 4-4" stroke="currentColor" strokeWidth="1.5" />
+    <svg className={`w-4 h-4 transform transition ${open ? "rotate-180" : ""}`} viewBox="0 0 20 20" fill="none">
+      <path d="M6 8l4 4 4-4" stroke="currentColor" strokeWidth="1.5"/>
     </svg>
   );
 
   const SortIcon = () => (
     <svg className="w-3.5 h-3.5 text-slate-400" viewBox="0 0 20 20">
-      <path
-        d="M7 7h6M7 10h4M7 13h2"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
+      <path d="M7 7h6M7 10h4M7 13h2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
     </svg>
   );
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-100/80 backdrop-blur-sm overflow-y-auto">
+    <div className="fixed inset-0 bg-slate-50 overflow-y-auto z-50">
       {/* Header */}
-      <div className="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600 text-sm font-semibold">
-                ID
-              </div>
-              <div>
-                <div className="text-sm font-medium text-slate-500">
-                  Complaint ID
-                </div>
-                <div className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
-                  {form.complaint_id || "—"}
-                </div>
-              </div>
-            </div>
-            <div className="text-[11px] text-slate-500">
-              {form.createdAt
-                ? new Date(form.createdAt).toLocaleString()
-                : ""}
-            </div>
+      <div className="sticky top-0 bg-white border-b px-6 py-3 flex justify-between items-center z-40">
+        <div>
+          <div className="text-2xl font-bold text-slate-900">{form.complaint_id}</div>
+          <div className="text-xs text-slate-500">
+            {form.createdAt ? new Date(form.createdAt).toLocaleString() : ""}
           </div>
+        </div>
 
-          <div className="flex flex-wrap gap-2 print:hidden">
-            <button
-              onClick={onClose}
-              className="px-3 py-2 text-xs md:text-sm rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition"
-            >
-              ← Back
-            </button>
+        <div className="flex gap-2">
+          <button onClick={onClose} className="px-3 py-2 text-sm bg-slate-100 rounded-md">
+            ← Back
+          </button>
 
-            <button
-              onClick={() => window.print()}
-              className="px-3 py-2 text-xs md:text-sm rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 transition"
-            >
-              Print
-            </button>
+          <button onClick={() => window.print()} className="px-3 py-2 text-sm border rounded-md">
+            Print
+          </button>
 
-            <button
-              onClick={() => setEditMode((s) => !s)}
-              className={`px-3 py-2 text-xs md:text-sm rounded-lg font-medium text-white shadow-sm transition
-                ${
-                  editMode
-                    ? "bg-rose-500 hover:bg-rose-600"
-                    : "bg-indigo-600 hover:bg-indigo-700"
-                }`}
-            >
-              {editMode ? "Cancel Edit" : "Edit"}
-            </button>
-          </div>
+          <button
+            onClick={() => setEditMode((s) => !s)}
+            className={`px-3 py-2 text-sm text-white rounded-md ${
+              editMode ? "bg-rose-600" : "bg-indigo-600"
+            }`}
+          >
+            {editMode ? "Cancel" : "Edit"}
+          </button>
         </div>
       </div>
 
       {/* BODY */}
-      <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-8 print:p-4">
+      <div className="max-w-7xl mx-auto p-6 space-y-8">
+        {/* --------------------------------------- */}
         {/* TOP CARDS */}
+        {/* --------------------------------------- */}
         <div className="grid lg:grid-cols-3 gap-6">
           {/* LEFT: COMPLAINT INFO */}
-          <div className="lg:col-span-2 bg-white/80 backdrop-blur-xl p-6 md:p-7 rounded-2xl border border-slate-200 shadow-sm">
-            <div className="flex items-center justify-between gap-2 mb-4">
-              <div>
-                <FieldLabel>Complaint Information</FieldLabel>
-                <p className="text-xs text-slate-500">
-                  Core case details and fraud description
-                </p>
-              </div>
-              <div className="hidden md:flex items-center gap-2 text-[11px] text-slate-500">
-                <span className="inline-block w-2 h-2 rounded-full bg-amber-400" />
-                {form.total_amount
-                  ? `₹${form.total_amount.toLocaleString()} disputed`
-                  : "Amount not specified"}
-              </div>
-            </div>
+          <div className="lg:col-span-2 bg-white p-6 rounded-xl border shadow-sm">
+            <FieldLabel>Complaint Information</FieldLabel>
 
             <div className="mt-4 grid sm:grid-cols-2 gap-4">
               {/* GD Number */}
-              <div className="flex flex-col gap-1.5">
+              <div>
                 <FieldLabel>GD Number</FieldLabel>
                 {editMode ? (
-                  <input
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  <input className="w-full px-3 py-2 border rounded-md bg-slate-50"
                     value={form.gd_case_no || ""}
-                    onChange={(e) =>
-                      updateField("gd_case_no", e.target.value)
-                    }
+                    onChange={(e) => updateField("gd_case_no", e.target.value)}
                   />
                 ) : (
-                  <div className="text-sm font-semibold text-slate-900">
-                    {form.gd_case_no || "—"}
-                  </div>
+                  <div className="font-medium">{form.gd_case_no || "—"}</div>
                 )}
               </div>
 
               {/* Police Station */}
-              <div className="flex flex-col gap-1.5">
+              <div>
                 <FieldLabel>Police Station</FieldLabel>
                 {editMode ? (
-                  <input
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  <input className="w-full px-3 py-2 border rounded-md bg-slate-50"
                     value={form.police_station || ""}
-                    onChange={(e) =>
-                      updateField("police_station", e.target.value)
-                    }
+                    onChange={(e) => updateField("police_station", e.target.value)}
                   />
                 ) : (
-                  <div className="text-sm font-semibold text-slate-900">
-                    {form.police_station || "—"}
-                  </div>
+                  <div className="font-medium">{form.police_station || "—"}</div>
                 )}
               </div>
 
               {/* Amount */}
-              <div className="flex flex-col gap-1.5">
+              <div>
                 <FieldLabel>Fraud Amount</FieldLabel>
                 {editMode ? (
-                  <input
-                    type="number"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  <input type="number" className="w-full px-3 py-2 border rounded-md bg-slate-50"
                     value={form.total_amount || ""}
-                    onChange={(e) =>
-                      updateField("total_amount", e.target.value)
-                    }
+                    onChange={(e) => updateField("total_amount", e.target.value)}
                   />
                 ) : (
-                  <div className="text-lg font-bold text-emerald-700">
+                  <div className="font-bold text-lg text-emerald-700">
                     ₹{form.total_amount?.toLocaleString() || 0}
                   </div>
                 )}
               </div>
 
               {/* Fraudster Phone */}
-              <div className="flex flex-col gap-1.5">
+              <div>
                 <FieldLabel>Fraudster Phone</FieldLabel>
                 {editMode ? (
-                  <input
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  <input className="w-full px-3 py-2 border rounded-md bg-slate-50"
                     value={form.fraudster_phone || ""}
-                    onChange={(e) =>
-                      updateField("fraudster_phone", e.target.value)
-                    }
+                    onChange={(e) => updateField("fraudster_phone", e.target.value)}
                   />
                 ) : (
-                  <div className="text-sm font-semibold text-slate-900">
-                    {form.fraudster_phone || "—"}
-                  </div>
+                  <div className="font-medium">{form.fraudster_phone || "—"}</div>
                 )}
               </div>
             </div>
 
             {/* Description */}
-            <div className="mt-6 flex flex-col gap-1.5">
+            <div className="mt-6">
               <FieldLabel>Description</FieldLabel>
               <textarea
-                className="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                className="w-full p-3 bg-slate-50 border rounded-md font-semibold "
                 rows={5}
                 readOnly={!editMode}
                 value={form.fraud_description || ""}
-                onChange={(e) =>
-                  updateField("fraud_description", e.target.value)
-                }
+                onChange={(e) => updateField("fraud_description", e.target.value)}
               />
             </div>
           </div>
 
           {/* RIGHT: COMPLAINANT */}
-          <div className="bg-white/80 backdrop-blur-xl p-6 md:p-7 rounded-2xl border border-slate-200 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
+          <div className="bg-white p-6 rounded-xl border shadow-sm">
+            <FieldLabel>Complainant</FieldLabel>
+
+            <div className="mt-4 space-y-3">
               <div>
-                <FieldLabel>Complainant</FieldLabel>
-                <p className="text-xs text-slate-500">
-                  Victim / reporting person details
-                </p>
-              </div>
-              <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-[11px] font-semibold text-emerald-700">
-                Personal Info
-              </span>
-            </div>
-
-            <div className="mt-2 space-y-3.5">
-              <div className="flex flex-col gap-1.5">
                 <FieldLabel>Name</FieldLabel>
-                <input
-                  readOnly={!editMode}
+                <input readOnly={!editMode}
                   value={form.complainant_name || ""}
-                  onChange={(e) =>
-                    updateField("complainant_name", e.target.value)
-                  }
-                  className={`w-full px-3 py-2 rounded-xl border border-slate-200 text-sm ${
-                    editMode
-                      ? "bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
-                      : "bg-white"
-                  }`}
+                  onChange={(e) => updateField("complainant_name", e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md ${editMode ? "bg-slate-50" : ""}`}
                 />
               </div>
 
-              <div className="flex flex-col gap-1.5">
+              <div>
                 <FieldLabel>Relation</FieldLabel>
-                <input
-                  readOnly={!editMode}
+                <input readOnly={!editMode}
                   value={form.relation || ""}
-                  onChange={(e) =>
-                    updateField("relation", e.target.value)
-                  }
-                  className={`w-full px-3 py-2 rounded-xl border border-slate-200 text-sm ${
-                    editMode
-                      ? "bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
-                      : "bg-white"
-                  }`}
+                  onChange={(e) => updateField("relation", e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md ${editMode ? "bg-slate-50" : ""}`}
                 />
               </div>
 
-              <div className="flex flex-col gap-1.5">
+              <div>
                 <FieldLabel>Phone</FieldLabel>
-                <input
-                  readOnly={!editMode}
+                <input readOnly={!editMode}
                   value={form.phone_no || ""}
-                  onChange={(e) =>
-                    updateField("phone_no", e.target.value)
-                  }
-                  className={`w-full px-3 py-2 rounded-xl border border-slate-200 text-sm ${
-                    editMode
-                      ? "bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
-                      : "bg-white"
-                  }`}
+                  onChange={(e) => updateField("phone_no", e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md ${editMode ? "bg-slate-50" : ""}`}
                 />
               </div>
 
-              <div className="flex flex-col gap-1.5">
+              <div>
                 <FieldLabel>Email</FieldLabel>
-                <input
-                  readOnly={!editMode}
+                <input readOnly={!editMode}
                   value={form.email_id || ""}
-                  onChange={(e) =>
-                    updateField("email_id", e.target.value)
-                  }
-                  className={`w-full px-3 py-2 rounded-xl border border-slate-200 text-sm ${
-                    editMode
-                      ? "bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
-                      : "bg-white"
-                  }`}
+                  onChange={(e) => updateField("email_id", e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md ${editMode ? "bg-slate-50" : ""}`}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="flex flex-col gap-1.5">
+                <div>
                   <FieldLabel>DOB</FieldLabel>
-                  <input
-                    type="date"
-                    readOnly={!editMode}
+                  <input type="date" readOnly={!editMode}
                     value={form.dob || ""}
-                    onChange={(e) =>
-                      updateField("dob", e.target.value)
-                    }
-                    className={`w-full px-3 py-2 rounded-xl border border-slate-200 text-sm ${
-                      editMode
-                        ? "bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
-                        : "bg-white"
-                    }`}
+                    onChange={(e) => updateField("dob", e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-md ${editMode ? "bg-slate-50" : ""}`}
                   />
                 </div>
 
-                <div className="flex flex-col gap-1.5">
+                <div>
                   <FieldLabel>Age</FieldLabel>
-                  <input
-                    type="number"
-                    readOnly={!editMode}
+                  <input type="number" readOnly={!editMode}
                     value={form.age || ""}
-                    onChange={(e) =>
-                      updateField("age", e.target.value)
-                    }
-                    className={`w-full px-3 py-2 rounded-xl border border-slate-200 text-sm ${
-                      editMode
-                        ? "bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
-                        : "bg-white"
-                    }`}
+                    onChange={(e) => updateField("age", e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-md ${editMode ? "bg-slate-50" : ""}`}
                   />
                 </div>
               </div>
 
-              <div className="flex flex-col gap-1.5">
+              <div>
                 <FieldLabel>Sex</FieldLabel>
-                <select
-                  disabled={!editMode}
+                <select disabled={!editMode}
                   value={form.sex || ""}
                   onChange={(e) => updateField("sex", e.target.value)}
-                  className={`w-full px-3 py-2 rounded-xl border border-slate-200 text-sm ${
-                    editMode
-                      ? "bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
-                      : "bg-white"
-                  }`}
-                >
+                  className={`w-full px-3 py-2 border rounded-md ${editMode ? "bg-slate-50" : ""}`}>
                   <option value="">Select</option>
                   <option>Male</option>
                   <option>Female</option>
@@ -3295,20 +2529,14 @@ export default function ComplaintFullView({ complaint, apiBase, onClose, refresh
           </div>
         </div>
 
+        {/* --------------------------------------- */}
         {/* BANKS SECTION */}
+        {/* --------------------------------------- */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <FieldLabel>Bank & Transaction Details</FieldLabel>
-              <p className="text-xs text-slate-500 mt-0.5">
-                All linked accounts and movement of funds
-              </p>
-            </div>
+          <div className="flex justify-between">
+            <FieldLabel>Bank & Transaction Details</FieldLabel>
             {editMode && (
-              <button
-                onClick={addBank}
-                className="px-3.5 py-2 rounded-xl bg-indigo-600 text-white text-xs md:text-sm font-medium shadow-sm hover:bg-indigo-700 transition"
-              >
+              <button onClick={addBank} className="px-3 py-2 bg-indigo-600 text-white text-sm rounded-md">
                 + Add Bank
               </button>
             )}
@@ -3319,32 +2547,21 @@ export default function ComplaintFullView({ complaint, apiBase, onClose, refresh
             const sortedTx = getSortedTransactions(bi, bank.transactions || []);
 
             return (
-              <div
-                key={bi}
-                className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-2xl shadow-sm overflow-hidden"
-              >
+              <div key={bi} className="bg-white border rounded-xl shadow-sm overflow-hidden">
                 {/* Summary */}
-                <div className="px-5 py-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <div className="h-7 w-7 rounded-full bg-indigo-50 flex items-center justify-center text-[11px] font-semibold text-indigo-600">
-                        {bi + 1}
-                      </div>
-                      <div className="font-semibold text-slate-900">
-                        {bank.bank_name || `Bank ${bi + 1}`}
-                      </div>
+                <div className="px-5 py-4 flex justify-between items-center">
+                  <div>
+                    <div className="font-semibold text-slate-900">
+                      {bank.bank_name || `Bank ${bi + 1}`}
                     </div>
-                    <div className="text-[11px] text-slate-500">
-                      {mask(bank.account_no)} • {bank.ifsc || "IFSC N/A"}
+                    <div className="text-xs text-slate-500">
+                      {mask(bank.account_no)} • {bank.ifsc || "N/A"}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex gap-3">
                     {editMode && (
-                      <button
-                        onClick={() => removeBank(bi)}
-                        className="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 text-xs font-medium border border-rose-100 hover:bg-rose-100 transition"
-                      >
+                      <button onClick={() => removeBank(bi)} className="px-3 py-1 bg-rose-100 text-rose-700 rounded-md text-sm">
                         Remove
                       </button>
                     )}
@@ -3352,15 +2569,13 @@ export default function ComplaintFullView({ complaint, apiBase, onClose, refresh
                     <button
                       onClick={() =>
                         setBankUI((s) =>
-                          s.map((x, i) =>
-                            i === bi ? { ...x, expanded: !x.expanded } : x
-                          )
+                          s.map((x, i) => (i === bi ? { ...x, expanded: !x.expanded } : x))
                         )
                       }
-                      className="px-3 py-1.5 rounded-lg bg-slate-50 text-xs text-slate-700 border border-slate-200 flex items-center gap-1.5 hover:bg-slate-100 transition"
+                      className="px-3 py-1 bg-slate-100 rounded-md text-sm flex items-center gap-2"
                     >
                       <Chevron open={ui.expanded} />
-                      <span>{ui.expanded ? "Collapse" : "Expand"}</span>
+                      {ui.expanded ? "Collapse" : "Expand"}
                     </button>
                   </div>
                 </div>
@@ -3368,92 +2583,68 @@ export default function ComplaintFullView({ complaint, apiBase, onClose, refresh
                 {/* PANEL */}
                 <div
                   className={`px-5 transition-all duration-300 overflow-hidden ${
-                    ui.expanded ? "max-h-[1200px] py-5" : "max-h-0 py-0"
+                    ui.expanded ? "max-h-[1000px] py-5" : "max-h-0 py-0"
                   }`}
                 >
                   {/* Bank Fields */}
-                  <div className="grid md:grid-cols-3 gap-4 mb-6">
-                    <div className="flex flex-col gap-1.5">
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div>
                       <FieldLabel>Bank Name</FieldLabel>
-                      <input
-                        readOnly={!editMode}
+                      <input readOnly={!editMode}
                         value={bank.bank_name || ""}
-                        onChange={(e) =>
-                          updateBankField(bi, "bank_name", e.target.value)
-                        }
-                        className={`w-full px-3 py-2 rounded-xl border border-slate-200 text-sm ${
-                          editMode
-                            ? "bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
-                            : "bg-white"
+                        onChange={(e) => updateBankField(bi, "bank_name", e.target.value)}
+                        className={`w-full px-3 py-2 border rounded-md ${
+                          editMode ? "bg-slate-50" : ""
                         }`}
                       />
                     </div>
 
-                    <div className="flex flex-col gap-1.5">
+                    <div>
                       <FieldLabel>Account Number</FieldLabel>
-                      <input
-                        readOnly={!editMode}
+                      <input readOnly={!editMode}
                         value={bank.account_no || ""}
-                        onChange={(e) =>
-                          updateBankField(bi, "account_no", e.target.value)
-                        }
-                        className={`w-full px-3 py-2 rounded-xl border border-slate-200 text-sm ${
-                          editMode
-                            ? "bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
-                            : "bg-white"
+                        onChange={(e) => updateBankField(bi, "account_no", e.target.value)}
+                        className={`w-full px-3 py-2 border rounded-md ${
+                          editMode ? "bg-slate-50" : ""
                         }`}
                       />
                     </div>
 
-                    <div className="flex flex-col gap-1.5">
+                    <div>
                       <FieldLabel>IFSC</FieldLabel>
-                      <input
-                        readOnly={!editMode}
+                      <input readOnly={!editMode}
                         value={bank.ifsc || ""}
-                        onChange={(e) =>
-                          updateBankField(bi, "ifsc", e.target.value)
-                        }
-                        className={`w-full px-3 py-2 rounded-xl border border-slate-200 text-sm ${
-                          editMode
-                            ? "bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
-                            : "bg-white"
+                        onChange={(e) => updateBankField(bi, "ifsc", e.target.value)}
+                        className={`w-full px-3 py-2 border rounded-md ${
+                          editMode ? "bg-slate-50" : ""
                         }`}
                       />
                     </div>
                   </div>
 
                   {/* Transactions */}
-                  <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <FieldLabel>Transactions</FieldLabel>
-                        <span className="text-[11px] text-slate-500">
-                          {sortedTx.length} entries
-                        </span>
-                      </div>
+                  <div className="mt-6">
+                    <div className="flex justify-between mb-3">
+                      <FieldLabel>Transactions</FieldLabel>
                       {editMode && (
                         <button
                           onClick={() => addTransaction(bi)}
-                          className="px-3.5 py-2 text-xs md:text-sm rounded-xl bg-emerald-600 text-white font-medium shadow-sm hover:bg-emerald-700 transition"
+                          className="px-3 py-2 text-sm bg-emerald-600 text-white rounded"
                         >
-                          + Add Transaction
+                          + Add Tx
                         </button>
                       )}
                     </div>
 
                     {/* Table */}
-                    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-slate-50/60">
-                      <table className="w-full text-xs md:text-sm">
-                        <thead className="bg-slate-100/80">
+                    <div className="overflow-x-auto border rounded-md">
+                      <table className="w-full text-sm">
+                        <thead className="bg-slate-100">
                           <tr>
                             {["refNo", "date", "time", "amount"].map((col) => (
-                              <th
-                                key={col}
-                                className="px-4 py-2.5 text-left font-semibold text-slate-600 border-b border-slate-200 cursor-pointer select-none"
-                                onClick={() => toggleSort(bi, col)}
-                              >
-                                <div className="flex items-center gap-1.5">
-                                  {col === "refNo" && "Transaction ID / UTR"}
+                              <th key={col} className="px-4 py-2 text-left cursor-pointer" onClick={() => toggleSort(bi, col)}>
+                                <div className="flex items-center gap-1">
+                                  {col === "refNo" && "Transaction Id/ UTR no"}
                                   {col === "date" && "Date"}
                                   {col === "time" && "Time"}
                                   {col === "amount" && "Amount"}
@@ -3461,34 +2652,19 @@ export default function ComplaintFullView({ complaint, apiBase, onClose, refresh
                                 </div>
                               </th>
                             ))}
-                            {editMode && (
-                              <th className="px-4 py-2.5 border-b border-slate-200 text-right">
-                                Actions
-                              </th>
-                            )}
+                            {editMode && <th className="px-4 py-2">Actions</th>}
                           </tr>
                         </thead>
 
                         <tbody>
                           {sortedTx.map((tx, ti) => (
-                            <tr
-                              key={ti}
-                              className="border-b border-slate-100 last:border-0 odd:bg-white even:bg-amber-50/40"
-                            >
+                            <tr key={ti} className="border-t bg-yellow-50 font-bold">
                               {/* Reference */}
-                              <td className="px-4 py-2.5 font-semibold text-slate-800 align-middle">
+                              <td className="px-4 py-2 font-semibold">
                                 {editMode ? (
-                                  <input
-                                    className="w-full px-2 py-1.5 rounded-lg border border-slate-200 bg-white text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                                  <input className="w-full px-2 py-1 border rounded-md"
                                     value={tx.refNo || ""}
-                                    onChange={(e) =>
-                                      updateTransactionField(
-                                        bi,
-                                        ti,
-                                        "refNo",
-                                        e.target.value
-                                      )
-                                    }
+                                    onChange={(e) => updateTransactionField(bi, ti, "refNo", e.target.value)}
                                   />
                                 ) : (
                                   tx.refNo || "—"
@@ -3496,20 +2672,11 @@ export default function ComplaintFullView({ complaint, apiBase, onClose, refresh
                               </td>
 
                               {/* Date */}
-                              <td className="px-4 py-2.5 align-middle">
+                              <td className="px-4 py-2">
                                 {editMode ? (
-                                  <input
-                                    type="date"
-                                    className="w-full px-2 py-1.5 rounded-lg border border-slate-200 bg-white text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                                  <input type="date" className="w-full px-2 py-1 border rounded-md"
                                     value={tx.date || ""}
-                                    onChange={(e) =>
-                                      updateTransactionField(
-                                        bi,
-                                        ti,
-                                        "date",
-                                        e.target.value
-                                      )
-                                    }
+                                    onChange={(e) => updateTransactionField(bi, ti, "date", e.target.value)}
                                   />
                                 ) : (
                                   tx.date || "—"
@@ -3517,20 +2684,11 @@ export default function ComplaintFullView({ complaint, apiBase, onClose, refresh
                               </td>
 
                               {/* Time */}
-                              <td className="px-4 py-2.5 align-middle">
+                              <td className="px-4 py-2">
                                 {editMode ? (
-                                  <input
-                                    type="time"
-                                    className="w-full px-2 py-1.5 rounded-lg border border-slate-200 bg-white text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                                  <input type="time" className="w-full px-2 py-1 border rounded-md"
                                     value={tx.time || ""}
-                                    onChange={(e) =>
-                                      updateTransactionField(
-                                        bi,
-                                        ti,
-                                        "time",
-                                        e.target.value
-                                      )
-                                    }
+                                    onChange={(e) => updateTransactionField(bi, ti, "time", e.target.value)}
                                   />
                                 ) : (
                                   tx.time || "—"
@@ -3538,20 +2696,11 @@ export default function ComplaintFullView({ complaint, apiBase, onClose, refresh
                               </td>
 
                               {/* Amount */}
-                              <td className="px-4 py-2.5 align-middle text-right font-semibold text-emerald-700">
+                              <td className="px-4 py-2 text-centre font-semibold text-emerald-700">
                                 {editMode ? (
-                                  <input
-                                    type="number"
-                                    className="w-full px-2 py-1.5 rounded-lg border border-slate-200 bg-white text-xs md:text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                                  <input type="number" className="w-full px-2 py-1 border rounded-md text-right"
                                     value={tx.amount || ""}
-                                    onChange={(e) =>
-                                      updateTransactionField(
-                                        bi,
-                                        ti,
-                                        "amount",
-                                        e.target.value
-                                      )
-                                    }
+                                    onChange={(e) => updateTransactionField(bi, ti, "amount", e.target.value)}
                                   />
                                 ) : (
                                   `₹${Number(tx.amount || 0).toLocaleString()}`
@@ -3560,30 +2709,14 @@ export default function ComplaintFullView({ complaint, apiBase, onClose, refresh
 
                               {/* Remove */}
                               {editMode && (
-                                <td className="px-4 py-2.5 text-right align-middle">
-                                  <button
-                                    onClick={() =>
-                                      removeTransaction(bi, ti)
-                                    }
-                                    className="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 text-xs font-medium border border-rose-100 hover:bg-rose-100 transition"
-                                  >
+                                <td className="px-4 py-2">
+                                  <button onClick={() => removeTransaction(bi, ti)} className="px-3 py-1 bg-rose-200 text-rose-800 rounded-md">
                                     Remove
                                   </button>
                                 </td>
                               )}
                             </tr>
                           ))}
-
-                          {sortedTx.length === 0 && (
-                            <tr>
-                              <td
-                                colSpan={editMode ? 5 : 4}
-                                className="px-4 py-4 text-center text-xs text-slate-500"
-                              >
-                                No transactions added yet.
-                              </td>
-                            </tr>
-                          )}
                         </tbody>
                       </table>
                     </div>
@@ -3592,78 +2725,47 @@ export default function ComplaintFullView({ complaint, apiBase, onClose, refresh
               </div>
             );
           })}
-
-          {(form.banks || []).length === 0 && (
-            <div className="text-xs text-slate-500 italic px-1">
-              No bank details added.
-            </div>
-          )}
         </div>
 
+        {/* --------------------------------------- */}
         {/* DOCUMENTS */}
-        <div className="bg-white/80 backdrop-blur-xl p-6 md:p-7 border border-slate-200 rounded-2xl shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <FieldLabel>Uploaded Documents</FieldLabel>
-              <p className="text-xs text-slate-500 mt-0.5">
-                FIR, bank statements, screenshots, and supporting proofs
-              </p>
-            </div>
-          </div>
+        {/* --------------------------------------- */}
+        <div className="bg-white p-6 border rounded-xl shadow-sm">
+          <FieldLabel>Uploaded Documents</FieldLabel>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
-            {!form.files && (
-              <div className="text-slate-500 italic text-sm">
-                No documents available.
-              </div>
-            )}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+            {!form.files && <div className="text-slate-500 italic">No documents available.</div>}
 
             {form.files &&
               Object.entries(form.files).flatMap(([key, val]) =>
                 (Array.isArray(val) ? val : [val]).map((file, i) => (
-                  <a
-                    key={`${key}-${i}`}
-                    href={`${apiBase}/uploads/${file}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-4 p-4 bg-slate-50/80 hover:bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition"
-                  >
-                    <div className="w-11 h-11 flex items-center justify-center rounded-xl bg-white shadow-sm border border-slate-200 text-indigo-500 text-lg">
+                  <a key={i} href={`${apiBase}/uploads/${file}`} className="flex items-center gap-4 p-4 bg-slate-50 border rounded-lg hover:bg-white">
+                    <div className="w-12 h-12 flex items-center justify-center border rounded bg-white text-indigo-600">
                       📄
                     </div>
-                    <div className="flex-1">
-                      <div className="text-xs font-semibold text-slate-800 uppercase tracking-wide">
-                        {key.replace(/_/g, " ")}
-                      </div>
-                      <div className="text-[11px] text-slate-500">
-                        Document {i + 1}
-                      </div>
+                    <div>
+                      <div className="font-semibold">{key.replace(/_/g, " ").toUpperCase()}</div>
+                      <div className="text-xs text-slate-500">Document {i + 1}</div>
                     </div>
-                    <div className="ml-auto text-[11px] font-medium text-indigo-600">
-                      View →
-                    </div>
+                    <div className="ml-auto text-indigo-600 text-sm">View →</div>
                   </a>
                 ))
               )}
           </div>
         </div>
 
+        {/* --------------------------------------- */}
         {/* SAVE BUTTON */}
+        {/* --------------------------------------- */}
         {editMode && (
-          <div className="flex justify-end gap-3 pt-2 pb-6 print:hidden">
+          <div className="flex justify-end gap-3">
             <button
               onClick={() => {
                 setEditMode(false);
                 setForm(complaint ? JSON.parse(JSON.stringify(complaint)) : {});
-                setBankUI(
-                  (complaint?.banks || []).map(() => ({
-                    expanded: true,
-                    sortBy: "date",
-                    sortDir: "desc",
-                  }))
-                );
+                setBankUI((complaint?.banks || []).map(() => ({ expanded: true, sortBy: "date", sortDir: "desc" })));
               }}
-              className="px-4 py-2.5 text-sm rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition"
+              className="px-4 py-2 bg-white border rounded-md"
             >
               Cancel
             </button>
@@ -3671,7 +2773,7 @@ export default function ComplaintFullView({ complaint, apiBase, onClose, refresh
             <button
               onClick={saveChanges}
               disabled={saving}
-              className="px-5 py-2.5 text-sm rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm disabled:opacity-60 disabled:cursor-not-allowed transition"
+              className="px-4 py-2 bg-emerald-600 text-white rounded-md"
             >
               {saving ? "Saving..." : "Save Changes"}
             </button>
@@ -3681,4 +2783,3 @@ export default function ComplaintFullView({ complaint, apiBase, onClose, refresh
     </div>
   );
 }
-
