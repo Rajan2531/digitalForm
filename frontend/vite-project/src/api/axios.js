@@ -1,8 +1,8 @@
 import axios from "axios";
 
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE,   //||"http://localhost:5000/api",
-  withCredentials: true, // important for cookies
+  baseURL: import.meta.env.VITE_API_BASE,  
+  withCredentials: true // important for cookies
 });
 
 let accessToken = null;

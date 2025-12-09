@@ -65,13 +65,14 @@ exports.createComplaint = async (req, res, next) => {
     const banks = JSON.parse(req.body.transactions || "[]");
 
     // File uploads
-    const files = {
-      aadhar: req.files?.aadhar?.[0]?.filename || "",
-      gd_copy: req.files?.gd_copy?.[0]?.filename || "",
-      bank_statement: req.files?.bank_statement?.[0]?.filename || "",
-      card_copy: req.files?.card_copy?.[0]?.filename || "",
-      other_docs: (req.files?.other_doc || []).map((f) => f.filename),
-    };
+    files = {
+  aadhar: req.files["aadhar"]?.[0]?.path,
+  gd_copy: req.files["gd_copy"]?.[0]?.path,
+  bank_statement: req.files["bank_statement"]?.[0]?.path,
+  card_copy: req.files["card_copy"]?.[0]?.path,
+  other_docs: (req.files["other_doc"] || []).map((f) => f.path),
+};
+
 
     // Create complaint entry
     const complaint = await Complaint.create({

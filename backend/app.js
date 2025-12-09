@@ -146,6 +146,21 @@ const adminAuthRoutes = require("./routes/adminAuth");
 const adminRoutes = require("./routes/admin");
 
 
+const { v2: cloudinary } = require("cloudinary");
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD,
+  api_key: process.env.CLOUDINARY_KEY,
+  api_secret: process.env.CLOUDINARY_SECRET,
+});
+
+
+
+
+
+
+
 // --------------------------
 // Configuration & constants
 // --------------------------
@@ -174,25 +189,28 @@ const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGIN
 // --------------------------
 // Multer setup (file uploads)
 // --------------------------
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, UPLOADS_DIR),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const safeName = path
-      .basename(file.originalname, ext)
-      .replace(/[<>:"/\\|?*]+/g, "_")
-      .replace(/\s+/g, "_")
-      .slice(0, 40);
-    cb(null, `${Date.now()}_${uuidv4()}_${safeName}${ext}`);
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: async (req, file) => {
+    const folder = "cyber-cell";    // your Cloudinary folder
+    return {
+      folder,
+      resource_type: "auto",         // supports PDFs, images, etc.
+      public_id: `${Date.now()}_${uuidv4()}`,
+      format: undefined,             // auto-detect file type
+    };
   },
 });
-const upload = multer({ storage, limits: { fileSize: MAX_FILE_SIZE } });
+
+
+const upload = multer({ storage });
+
 const cpUpload = upload.fields([
   { name: "aadhar", maxCount: 1 },
   { name: "gd_copy", maxCount: 1 },
   { name: "bank_statement", maxCount: 1 },
   { name: "card_copy", maxCount: 1 },
-  { name: "other_doc", maxCount: 3 },
+  { name: "other_doc", maxCount: 5 },
 ]);
 
 // --------------------------
@@ -213,27 +231,6 @@ app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 app.use(express.json({ limit: JSON_LIMIT }));
 app.use(express.urlencoded({ extended: true, limit: JSON_LIMIT }));
 
-// --------------------------
-// CORS
-// --------------------------
-// if (ALLOWED_ORIGINS.length === 1 && ALLOWED_ORIGINS[0] === "*") {
-//   app.use(cors()); // open for development
-// } else {
-//   app.use(
-//     cors({
-//       origin: function (origin, callback) {
-//         // allow requests with no origin (like mobile apps or curl)
-//         if (!origin) return callback(null, true);
-//         if (ALLOWED_ORIGINS.indexOf(origin) !== -1) {
-//           return callback(null, true);
-//         } else {
-//           return callback(new Error("CORS policy: This origin is not allowed"), false);
-//         }
-//       },
-//       optionsSuccessStatus: 200,
-//     })
-//   );
-// }
 
 
 app.use(
@@ -262,6 +259,9 @@ app.use("/uploads", express.static(UPLOADS_DIR));
 // --------------------------
 // Routes - your controllers
 // --------------------------
+
+app.use("/api/auth", adminAuthRoutes);
+app.use("/api/admin", adminRoutes);  // protected routes
 app.get("/", (req, res) => {
   res.send("🚀 Cyber Cell Backend (Secure) Running Successfully!");
 });
@@ -283,8 +283,7 @@ app.patch("/api/complaints/:id/update", complaintController.updateFull);
 // update status (optional)
 app.patch("/api/complaints/:id/status", complaintController.updateStatus);
 
-app.use("/api/auth", adminAuthRoutes);
-app.use("/api/admin", adminRoutes);  // protected routes
+
 // // get single complaint
 // app.get("/api/complaints/:id", complaintController.getComplaint);
 
