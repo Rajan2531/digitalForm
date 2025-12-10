@@ -2247,8 +2247,8 @@ export default function Dashboard() {
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
               <div>
-                <h1 className="text-4xl font-extrabold text-indigo-600">Candy Dashboard</h1>
-                <p className="text-sm text-gray-600 mt-1">Colorful overview of complaints</p>
+                <h1 className="text-4xl font-extrabold text-indigo-600">Cyber Cell: Dashboard</h1>
+                <p className="text-sm text-gray-600 mt-1">Overview of complaints</p>
               </div>
 
               <div className="flex items-center gap-3">

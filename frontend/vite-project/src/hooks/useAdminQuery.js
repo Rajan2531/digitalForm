@@ -8,6 +8,6 @@ export function useAdminQuery() {
       const { data } = await api.get("/api/admin/me");
       return data.admin;
     },
-    retry: false,
+    retry: true,
   });
 }

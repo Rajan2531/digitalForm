@@ -133,6 +133,7 @@ const mongoSanitize = require("express-mongo-sanitize");
 const xssClean = require("xss-clean");
 const hpp = require("hpp");
 const compression = require("compression");
+const pdfRouter = require("./routes/pdfRoutes")
 
 dotenv.config();
 
@@ -267,6 +268,7 @@ app.get("/", (req, res) => {
 });
 
 // listing / export routes
+app.get("/api/complaints/:id/pdf", pdfRouter.getPDF )
 app.get("/api/complaints", complaintController.getAllComplaints);
 app.get("/api/export/csv", complaintController.exportToCSV);
 app.get("/api/export/excel", complaintController.exportComplaintsStyledExcel);

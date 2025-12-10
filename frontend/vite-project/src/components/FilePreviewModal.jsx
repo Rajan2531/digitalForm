@@ -20,16 +20,8 @@ export default function ComplaintFullView({ complaint, apiBase, onClose, refresh
   const [editMode, setEditMode] = useState(false);
   const [form, setForm] = useState(complaint ? JSON.parse(JSON.stringify(complaint)) : {});
   const [saving, setSaving] = useState(false);
-  const [preview, setPreview] = useState({ open: false, url: "", type: "" });
-  const getFileUrl = (file) => {
-  if (!file) return "";
-  if (/^https?:\/\//i.test(file)) return file; // Cloudinary URL
-  return `${apiBase}/uploads/${file}`;
-};
 
-const isPDF = (file) => file.toLowerCase().endsWith(".pdf");
-const isImage = (file) =>
-  [".jpg", ".jpeg", ".png", ".webp"].some((ext) => file.toLowerCase().includes(ext));
+
 
 
   // accordion + sort
@@ -214,9 +206,16 @@ const isImage = (file) =>
             ← Back
           </button>
 
-          <button onClick={() => window.print()} className="px-3 py-2 text-sm border rounded-md">
+          {/* <button onClick={() => window.print()} className="px-3 py-2 text-sm border rounded-md">
             Print
-          </button>
+          </button> */}
+          <button
+  onClick={() => window.open(`${apiBase}/api/complaints/${form._id}/pdf`, "_blank")}
+  className="px-3 py-2 text-sm bg-indigo-600 text-white rounded-md"
+>
+  Download PDF
+</button>
+
 
           <button
             onClick={() => setEditMode((s) => !s)}
