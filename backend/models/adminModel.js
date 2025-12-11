@@ -16,7 +16,7 @@ const mongoose = require("mongoose");
 const validator = require("validator");
 const bcrypt = require("bcrypt");
 const { default: isEmail } = require("validator/lib/isEmail");
-const { select } = require("framer-motion/client");
+
 const adminSchema = new mongoose.Schema({
     name:String,
     email: {
