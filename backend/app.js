@@ -209,7 +209,7 @@ app.use(express.urlencoded({ extended: true, limit: JSON_LIMIT }));
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", 'https://digital-form.netlify.app'],
+    origin: ["http://localhost:5173", "https://digital-form-kappa.vercel.app", 'https://digital-form.netlify.app'],
     credentials: true
   })
 );
