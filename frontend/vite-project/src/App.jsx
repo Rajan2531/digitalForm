@@ -45,25 +45,24 @@ export default function App() {
   // const onFileChange = (e) =>
   //   setFiles((f) => ({ ...f, [e.target.name]: e.target.files[0] }));
   const onFileChange = (e) => {
-  const name = e.target.name;
- const selected = Array.from(e.target.files);
+    const name = e.target.name;
+    const selected = Array.from(e.target.files);
 
-  const validFiles = [];
-  for (let file of selected) {
-    if (file.size > MAX_SIZE) {
-      alert(`${file.name} is too large! Max size is 5MB.`);
-      return;
-    } else {
-      validFiles.push(file);
+    const validFiles = [];
+    for (let file of selected) {
+      if (file.size > MAX_SIZE) {
+        alert(`${file.name} is too large! Max size is 5MB.`);
+        return;
+      } else {
+        validFiles.push(file);
+      }
     }
-  }
-  
-  setFiles((prev) => ({
-    ...prev,
-    [name]: validFiles,
-  }));
-};
 
+    setFiles((prev) => ({
+      ...prev,
+      [name]: validFiles,
+    }));
+  };
 
   // function to handle addition of new banks
   const updateBank = (i, newData) => {
@@ -94,15 +93,14 @@ export default function App() {
       //   }
       // );
       ["aadhar", "gd_copy", "bank_statement", "card_copy", "other_doc"].forEach(
-  (field) => {
-    if (files[field]) {
-      files[field].forEach((file) => {
-        data.append(field, file); // append each file
-      });
-    }
-  }
-);
-
+        (field) => {
+          if (files[field]) {
+            files[field].forEach((file) => {
+              data.append(field, file); // append each file
+            });
+          }
+        }
+      );
 
       const res = await axios.post(`${API_BASE}/api/v1/complaints`, data, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -205,7 +203,7 @@ export default function App() {
                     name="police_station"
                     value={form.police_station}
                     onChange={onChange}
-                    title = "Please select your police station."
+                    title="Please select your police station."
                     required
                     className="input"
                   >
@@ -324,16 +322,15 @@ export default function App() {
                   Complainant's Phone No.<span className="text-red-500">*</span>
                   <input
                     type="tel"
-                    minLength= "10"
+                    minLength="10"
                     maxLength="10"
                     name="phone_no"
-                    pattern = "[0-9]{10}"
-                    title = "Please enter a valid 10 digit phone number."
+                    pattern="[0-9]{10}"
+                    title="Please enter a valid 10 digit phone number."
                     value={form.phone_no}
                     onChange={onChange}
                     required
                     placeholder="XXX-XXX-XXXX"
-                    
                     className="input"
                   />
                 </label>
@@ -402,7 +399,7 @@ export default function App() {
 
                 {/* ✅ Fraudster’s Phone */}
                 <label className="sm:col-span-3">
-                  Fraudster's Phone Number (if any) 
+                  Fraudster's Phone Number (if any)
                   <input
                     type="text"
                     name="fraudster_phone"
@@ -546,8 +543,8 @@ export default function App() {
                   />
                 </label>
                 <label>
-                  Bank Statement / UPI Screenshot:<span className="text-red-500">*</span> 
-
+                  Bank Statement / UPI Screenshot:
+                  <span className="text-red-500">*</span>
                   <input
                     type="file"
                     name="bank_statement"
@@ -599,6 +596,7 @@ export default function App() {
             <div className="pt-4 text-center">
               <button
                 type="submit"
+                disabled={status?.loading}
                 className="bg-blue-700 hover:bg-blue-800 text-white px-10 py-2.5 rounded-lg font-semibold shadow-md transition"
               >
                 {status?.loading ? "Submitting..." : "Submit Complaint"}
