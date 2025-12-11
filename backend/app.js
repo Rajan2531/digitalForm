@@ -133,28 +133,25 @@ const mongoSanitize = require("express-mongo-sanitize");
 const xssClean = require("xss-clean");
 const hpp = require("hpp");
 const compression = require("compression");
-const pdfRouter = require("./routes/pdfRoutes")
+const pdfRouter = require("./routes/exportRouter")
+const cookieParser = require('cookie-parser');
 
 dotenv.config();
 
 // controllers & models
 const complaintController = require("./controllers/complaintController");
-const Complaint = require("./models/Complaint");
+const Complaint = require("./models/complaintModel");
 
 const app = express();
 
-const adminAuthRoutes = require("./routes/adminAuth");
-const adminRoutes = require("./routes/admin");
+const adminRouter = require('./routes/adminRouter')
+const complaintRouter = require("./routes/complaintRouter")
+const exportRouter = require('./routes/exportRouter')
 
 
-const { v2: cloudinary } = require("cloudinary");
-const { CloudinaryStorage } = require("multer-storage-cloudinary");
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD,
-  api_key: process.env.CLOUDINARY_KEY,
-  api_secret: process.env.CLOUDINARY_SECRET,
-});
+
+
 
 
 
@@ -187,32 +184,7 @@ const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGIN
   }
 })();
 
-// --------------------------
-// Multer setup (file uploads)
-// --------------------------
-const storage = new CloudinaryStorage({
-  cloudinary,
-  params: async (req, file) => {
-    const folder = "cyber-cell";    // your Cloudinary folder
-    return {
-      folder,
-      resource_type: "auto",         // supports PDFs, images, etc.
-      public_id: `${Date.now()}_${uuidv4()}`,
-      format: undefined,             // auto-detect file type
-    };
-  },
-});
 
-
-const upload = multer({ storage });
-
-const cpUpload = upload.fields([
-  { name: "aadhar", maxCount: 1 },
-  { name: "gd_copy", maxCount: 1 },
-  { name: "bank_statement", maxCount: 1 },
-  { name: "card_copy", maxCount: 1 },
-  { name: "other_doc", maxCount: 5 },
-]);
 
 // --------------------------
 // Security middlewares
@@ -224,6 +196,7 @@ app.use(helmet());
 
 app.use(hpp()); // prevent param pollution
 app.use(compression()); // gzip responses
+app.use(cookieParser());
 
 // --------------------------
 // Logging and parsers
@@ -261,29 +234,27 @@ app.use("/uploads", express.static(UPLOADS_DIR));
 // Routes - your controllers
 // --------------------------
 
-app.use("/api/auth", adminAuthRoutes);
-app.use("/api/admin", adminRoutes);  // protected routes
+
+app.use("/api/v1/admin", adminRouter);  // protected routes
+app.use("/api/v1/complaints", complaintRouter);
+app.use("/api/v1/exports", exportRouter);
 app.get("/", (req, res) => {
   res.send("🚀 Cyber Cell Backend (Secure) Running Successfully!");
 });
 
 // listing / export routes
-app.get("/api/complaints/:id/pdf", pdfRouter.getPDF )
-app.get("/api/complaints", complaintController.getAllComplaints);
-app.get("/api/export/csv", complaintController.exportToCSV);
-app.get("/api/export/excel", complaintController.exportComplaintsStyledExcel);
+// app.get("/api/complaints/:id/pdf", pdfRouter.getPDF )
+
+// app.get("/api/export/csv", complaintController.exportToCSV);
+// app.get("/api/export/excel", complaintController.exportComplaintsStyledExcel);
 
 // create complaint with file uploads
-app.post("/api/complaint", cpUpload, complaintController.createComplaint);
 
-// mark as read
-app.patch("/api/complaints/:id/mark-read", complaintController.markAsRead);
 
-// update full complaint (used by frontend Edit -> Save)
-app.patch("/api/complaints/:id/update", complaintController.updateFull);
+// // mark as read
+// app.patch("/api/complaints/:id/mark-read", complaintController.markAsRead);
 
-// update status (optional)
-app.patch("/api/complaints/:id/status", complaintController.updateStatus);
+// // update full complaint (used by frontend Edit -> Save
 
 
 // // get single complaint

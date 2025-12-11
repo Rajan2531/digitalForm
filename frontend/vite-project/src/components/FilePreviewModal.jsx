@@ -114,7 +114,7 @@ export default function ComplaintFullView({ complaint, apiBase, onClose, refresh
   const saveChanges = async () => {
     try {
       setSaving(true);
-      await axios.patch(`${apiBase}/api/complaints/${form._id}/update`, form);
+      await axios.patch(`${apiBase}/api/v1/complaints/${form._id}/update`, form, {withCredentials:true});
       setEditMode(false);
       refresh?.();
       alert("Updated successfully");
@@ -210,7 +210,7 @@ export default function ComplaintFullView({ complaint, apiBase, onClose, refresh
             Print
           </button> */}
           <button
-  onClick={() => window.open(`${apiBase}/api/complaints/${form._id}/pdf`, "_blank")}
+  onClick={() => window.open(`${apiBase}/api/v1/exports/${form._id}/pdf`, "_blank")}
   className="px-3 py-2 text-sm bg-indigo-600 text-white rounded-md"
 >
   Download PDF

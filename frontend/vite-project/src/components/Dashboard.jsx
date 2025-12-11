@@ -2113,8 +2113,13 @@ import {
   CartesianGrid,
   ResponsiveContainer,
 } from "recharts";
+import { useMutation } from "@tanstack/react-query";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+import { Logout } from "../features/admin/mutationFunctions";
+import queryClient from "../context/queryClient";
+import { useNavigate } from "react-router-dom";
+
+const API_BASE = import.meta.env.VITE_API_BASE 
 
 /**
  * Dashboard.js
@@ -2138,10 +2143,21 @@ export default function Dashboard() {
   // -----------------------------
   // Fetch complaints
   // -----------------------------
+
+  const navigate = useNavigate();
+
+
   const loadData = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_BASE}/api/complaints`);
+      const res = await axios({
+        method:'get',
+        url:`${API_BASE}/api/v1/complaints/get-all-complaints`,
+        headers:{
+          "Content-Type":'application/json'
+        },
+        withCredentials:true});
+        console.log(res.data)
       const sorted = res.data.data.sort(
         (a, b) => Number(a.isRead) - Number(b.isRead)
       );
@@ -2160,12 +2176,26 @@ export default function Dashboard() {
     loadData();
   }, []);
 
+  const {mutate}=useMutation({
+    mutationFn:Logout,
+    onSuccess:async()=>{
+       queryClient.removeQueries({queryKey:['admin'], exact:true})
+      navigate('/login', {replace:true});
+    },
+    onError:async()=>{
+      alert('Something went wrong.');
+    }
+  })
+  
+  function handleLogout(){
+    mutate();
+  }
   // -----------------------------
   // Mark as read (DB + local)
   // -----------------------------
   const markAsRead = async (id) => {
     try {
-      await axios.patch(`${API_BASE}/api/complaints/${id}/mark-read`);
+      await axios.patch(`${API_BASE}/api/v1/complaints/${id}/mark-read`,{}, {withCredentials:true});
       // optimistic local update
       setData((prev) => prev.map((c) => (c._id === id ? { ...c, isRead: true } : c)));
       setFiltered((prev) => prev.map((c) => (c._id === id ? { ...c, isRead: true } : c)));
@@ -2233,11 +2263,17 @@ export default function Dashboard() {
   // -----------------------------
   // Helpers for themed classes
   // -----------------------------
+  // const statusBadgeClass = (status) => {
+  //   if (status === "Closed") return "bg-green-100 text-green-800";
+  //   if (status === "Under Review") return "bg-pink-100 text-pink-700";
+  //   return "bg-gray-100 text-gray-800";
+  // };
   const statusBadgeClass = (status) => {
-    if (status === "Closed") return "bg-green-100 text-green-800";
-    if (status === "Under Review") return "bg-pink-100 text-pink-700";
-    return "bg-gray-100 text-gray-800";
-  };
+  if (status === "Closed") return "bg-green-100 text-green-700 border-green-300";
+  if (status === "Under Review") return "bg-pink-100 text-pink-700 border-pink-300";
+  return "bg-gray-100 text-gray-700 border-gray-300";
+};
+
 
   return (
     <>
@@ -2271,6 +2307,12 @@ export default function Dashboard() {
                   className="px-4 py-2 rounded-lg bg-indigo-600 text-white shadow hover:bg-indigo-700 transition"
                 >
                   Refresh
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-2 rounded-lg bg-indigo-600 text-white shadow hover:bg-indigo-700 transition"
+                >
+                  Logout
                 </button>
               </div>
             </div>
@@ -2492,10 +2534,40 @@ export default function Dashboard() {
                         <td className="px-4 py-3 font-medium text-green-600">₹{c.total_amount?.toLocaleString() || 0}</td>
                         <td className="px-4 py-3">{c.police_station}</td>
                         <td className="px-4 py-3">{c.createdAt?.slice(0, 10)}</td>
-                        <td className="px-4 py-3">
-                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusBadgeClass(c.status)}`}>
+                        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                          {/* <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusBadgeClass(c.status)}`}>
                             {c.status || "Pending"}
-                          </span>
+                          </span> */}
+
+                          
+
+
+  <select
+    value={c.status}
+    onChange={async (e) => {
+      const newStatus = e.target.value;
+
+      // Update backend
+      await updateStatus(c._id, newStatus);
+
+      // Update local UI immediately
+      setData(prev => prev.map(item =>
+        item._id === c._id ? { ...item, status: newStatus } : item
+      ));
+
+      setFiltered(prev => prev.map(item =>
+        item._id === c._id ? { ...item, status: newStatus } : item
+      ));
+    }}
+    className={`px-2 py-1 rounded-full text-xs font-semibold border ${statusBadgeClass(c.status)} cursor-pointer`}
+  >
+    <option value="Pending">Pending</option>
+    <option value="Under Review">Under Review</option>
+    <option value="Closed">Closed</option>
+  </select>
+
+
+                    
                         </td>
                       </tr>
                     ))
@@ -2516,5 +2588,14 @@ export default function Dashboard() {
         />
       )}
     </>
+  );
+}
+
+
+
+async function updateStatus(id, status) {
+  await axios.patch(`${API_BASE}/api/v1/complaints/${id}/status`, 
+    { status },
+    { withCredentials: true }
   );
 }

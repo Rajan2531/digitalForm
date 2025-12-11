@@ -1,14 +1,11 @@
-
-
-
 import React, { useState } from "react";
 import axios from "axios";
 import TransactionSection from "./components/TransactionSection";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
-
+const MAX_SIZE = 3 * 1024 * 1024;
 export default function App() {
-  const [complaint_id, setComplaint_id] = useState('');
+  const [complaint_id, setComplaint_id] = useState("");
   const [form, setForm] = useState({
     police_station: "",
     gd_case_no: "",
@@ -39,15 +36,36 @@ export default function App() {
   const [submitted, setSubmitted] = useState(false);
   const [cardFraud, setCardFraud] = useState(false); // ✅ toggle for card fraud
 
+  // function to handle changes in value of the form in input field.
+  const onChange = (e) => {
+    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+  };
 
+  // function to handle file upload changes
+  // const onFileChange = (e) =>
+  //   setFiles((f) => ({ ...f, [e.target.name]: e.target.files[0] }));
+  const onFileChange = (e) => {
+  const name = e.target.name;
+ const selected = Array.from(e.target.files);
+
+  const validFiles = [];
+  for (let file of selected) {
+    if (file.size > MAX_SIZE) {
+      alert(`${file.name} is too large! Max size is 5MB.`);
+      return;
+    } else {
+      validFiles.push(file);
+    }
+  }
   
-  const onChange = (e) =>{
-    
-    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));}
+  setFiles((prev) => ({
+    ...prev,
+    [name]: validFiles,
+  }));
+};
 
-  const onFileChange = (e) =>
-    setFiles((f) => ({ ...f, [e.target.name]: e.target.files[0] }));
 
+  // function to handle addition of new banks
   const updateBank = (i, newData) => {
     setBanks((prev) => prev.map((b, idx) => (idx === i ? newData : b)));
   };
@@ -61,7 +79,7 @@ export default function App() {
     };
     setBanks((prevBanks) => [...prevBanks, newBank]);
   };
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -70,17 +88,28 @@ export default function App() {
       Object.keys(form).forEach((k) => data.append(k, form[k] || ""));
       data.append("transactions", JSON.stringify(banks));
 
-      ["aadhar", "gd_copy", "bank_statement", "card_copy", "other_doc"].forEach((f) => {
-        if (files[f]) data.append(f, files[f]);
+      // ["aadhar", "gd_copy", "bank_statement", "card_copy", "other_doc"].forEach(
+      //   (f) => {
+      //     if (files[f]) data.append(f, files[f]);
+      //   }
+      // );
+      ["aadhar", "gd_copy", "bank_statement", "card_copy", "other_doc"].forEach(
+  (field) => {
+    if (files[field]) {
+      files[field].forEach((file) => {
+        data.append(field, file); // append each file
       });
+    }
+  }
+);
 
-      const res = await axios.post(`${API_BASE}/api/complaint`, data, {
+
+      const res = await axios.post(`${API_BASE}/api/v1/complaints`, data, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      
 
       if (res.data.ok) {
-        setComplaint_id(()=>res.data.complaint_id)
+        setComplaint_id(() => res.data.complaint_id);
         setSubmitted(true);
         setStatus(null);
       } else {
@@ -100,7 +129,9 @@ export default function App() {
           </h2>
           <p className="text-gray-600 mb-6">
             Your complaint has been successfully recorded. Please keep your
-            complaint ID: <span className = " font-bold text-red-500">{complaint_id}</span> safe.
+            complaint ID:{" "}
+            <span className=" font-bold text-red-500">{complaint_id}</span>{" "}
+            safe.
           </p>
           {/* <button
             onClick={() => window.location.reload()}
@@ -168,31 +199,33 @@ export default function App() {
               </legend>
               <div className="grid sm:grid-cols-2 gap-4 mt-3">
                 <label>
-  Name of the Police Station: <span className="text-red-500">*</span>
-  <select
-    name="police_station"
-    value={form.police_station}
-    onChange={onChange}
-    required
-    className="input"
-  >
-    <option value="">Select Police Station</option>
-    <option value="Jadavpur">Jadavpur</option>
-    <option value="Patuli">Patuli</option>
-    <option value="Netaji Nagar">Netaji Nagar</option>
-    <option value="Regent Park">Regent Park</option>
-    <option value="Garfa">Garfa</option>
-    <option value="Kasba">Kasba</option>
-    <option value="Bansdroni">Bansdroni</option>
-    <option value="Golf Green">Golf Green</option>
-    <option value="Patuli Women">Patuli Women</option>
-    <option value="Cyber Cell">Cyber Cell</option>
-  </select>
-</label>
-
+                  Name of the Police Station:{" "}
+                  <span className="text-red-500">*</span>
+                  <select
+                    name="police_station"
+                    value={form.police_station}
+                    onChange={onChange}
+                    title = "Please select your police station."
+                    required
+                    className="input"
+                  >
+                    <option value="">Select Police Station</option>
+                    <option value="Jadavpur">Jadavpur</option>
+                    <option value="Patuli">Patuli</option>
+                    <option value="Netaji Nagar">Netaji Nagar</option>
+                    <option value="Regent Park">Regent Park</option>
+                    <option value="Garfa">Garfa</option>
+                    <option value="Kasba">Kasba</option>
+                    <option value="Bansdroni">Bansdroni</option>
+                    <option value="Golf Green">Golf Green</option>
+                    <option value="Patuli Women">Patuli Women</option>
+                    <option value="Cyber Cell">Cyber Cell</option>
+                  </select>
+                </label>
 
                 <label>
-                  General Diary No. / Case No.<span className="text-red-500">*</span>
+                  General Diary No. / Case No.
+                  <span className="text-red-500">*</span>
                   <input
                     name="gd_case_no"
                     value={form.gd_case_no}
@@ -253,7 +286,7 @@ export default function App() {
                     name="age"
                     min="0"
                     max="120"
-                    value={ form.age|| ""}
+                    value={form.age || ""}
                     onChange={onChange}
                     className="input"
                     placeholder="Years"
@@ -276,8 +309,6 @@ export default function App() {
                 </label>
                 {/* ✅ New Fields End */}
 
-                
-
                 <label className="sm:col-span-2">
                   Complainant's Address (Present):
                   <textarea
@@ -292,19 +323,23 @@ export default function App() {
                 <label className="sm:col-span-2">
                   Complainant's Phone No.<span className="text-red-500">*</span>
                   <input
-                    type="number"
+                    type="tel"
+                    minLength= "10"
+                    maxLength="10"
                     name="phone_no"
+                    pattern = "[0-9]{10}"
+                    title = "Please enter a valid 10 digit phone number."
                     value={form.phone_no}
                     onChange={onChange}
                     required
-                    minLength={10}
-                    maxLength={10}
+                    placeholder="XXX-XXX-XXXX"
+                    
                     className="input"
                   />
                 </label>
 
                 <label className="sm:col-span-2">
-                 Complainant's Email Id:
+                  Complainant's Email Id:
                   <input
                     type="email"
                     name="email_id"
@@ -329,6 +364,7 @@ export default function App() {
                     name="total_amount"
                     value={form.total_amount}
                     onChange={onChange}
+                    placeholder="##00.00"
                     className="input"
                   />
                 </label>
@@ -366,7 +402,7 @@ export default function App() {
 
                 {/* ✅ Fraudster’s Phone */}
                 <label className="sm:col-span-3">
-                  Fraudster's Phone Number (if any)
+                  Fraudster's Phone Number (if any) 
                   <input
                     type="text"
                     name="fraudster_phone"
@@ -374,7 +410,7 @@ export default function App() {
                     onChange={onChange}
                     minLength={10}
                     maxLength={10}
-                    placeholder="Enter suspected fraudster’s number"
+                    placeholder="Same number mentioned in FIR or G.D."
                     className="input"
                   />
                 </label>
@@ -405,7 +441,11 @@ export default function App() {
                 <div className="grid sm:grid-cols-2 gap-4 mt-3">
                   <label>
                     Card Holder Name:
-                    <input name="card_holder" onChange={onChange} className="input" />
+                    <input
+                      name="card_holder"
+                      onChange={onChange}
+                      className="input"
+                    />
                   </label>
                   <label>
                     16 Digits of Card:
@@ -418,7 +458,11 @@ export default function App() {
                   </label>
                   <label>
                     Card Type:
-                    <select name="card_type" onChange={onChange} className="input">
+                    <select
+                      name="card_type"
+                      onChange={onChange}
+                      className="input"
+                    >
                       <option value="">Select</option>
                       <option value="Credit Card">Credit Card</option>
                       <option value="Debit Card">Debit Card</option>
@@ -426,38 +470,42 @@ export default function App() {
                   </label>
                   <label>
                     Issuing Bank:
-                    <input name="issuing_bank" onChange={onChange} className="input" />
+                    <input
+                      name="issuing_bank"
+                      onChange={onChange}
+                      className="input"
+                    />
                   </label>
                 </div>
               </fieldset>
             )}
 
-              {/* bank section */}
-                         {/* Transaction Section */}
-             <fieldset className="border border-gray-200 rounded-lg p-4 sm:p-6">
-               <legend className="text-blue-700 font-semibold px-2">
-                 Fraudulent Transaction Details
+            {/* bank section */}
+            {/* Transaction Section */}
+            <fieldset className="border border-gray-200 rounded-lg p-4 sm:p-6">
+              <legend className="text-blue-700 font-semibold px-2">
+                Fraudulent Transaction Details
               </legend>
-               <div className="space-y-4 mt-3">
-                 {banks.map((b, i) => (
-                   <TransactionSection
-                     key={i}
-                     index={i}
-                     bank={b}
-                     updateBank={updateBank}
-                   />
-                 ))}
-               </div>
-               {banks.length < 3 && (
-                 <button
+              <div className="space-y-4 mt-3">
+                {banks.map((b, i) => (
+                  <TransactionSection
+                    key={i}
+                    index={i}
+                    bank={b}
+                    updateBank={updateBank}
+                  />
+                ))}
+              </div>
+              {banks.length < 3 && (
+                <button
                   type="button"
                   onClick={addBankSection}
-                   className="text-blue-700 font-medium mt-2 hover:text-blue-900"
-                 >
-                   + Add Another Bank
-                 </button>
+                  className="text-blue-700 font-medium mt-2 hover:text-blue-900"
+                >
+                  + Add Another Bank
+                </button>
               )}
-             </fieldset>
+            </fieldset>
 
             {/* Supporting Docs */}
             <fieldset className="border border-gray-200 rounded-lg p-4 sm:p-6">
@@ -465,15 +513,20 @@ export default function App() {
                 Supporting Documents
               </legend>
               <div className="grid sm:grid-cols-2 gap-4 mt-3">
-              
-                 <label>
+                <label>
                   Aadhar Card: <span className="text-red-500">*</span>
                   <input
                     type="file"
                     name="aadhar"
+                    accept="image/*,.pdf"
                     required
                     onChange={onFileChange}
-                    className="file-input"
+                    className=" block w-full text-sm text-gray-700
+    file:mr-4 file:py-2 file:px-4
+    file:rounded-lg file:border-0
+    file:text-sm file:font-medium
+    file:bg-blue-600 file:text-white
+    hover:file:bg-blue-700"
                   />
                 </label>
                 <label>
@@ -481,9 +534,15 @@ export default function App() {
                   <input
                     type="file"
                     name="gd_copy"
+                    accept="image/*,.pdf"
                     required
                     onChange={onFileChange}
-                    className="file-input"
+                    className=" block w-full text-sm text-gray-700
+    file:mr-4 file:py-2 file:px-4
+    file:rounded-lg file:border-0
+    file:text-sm file:font-medium
+    file:bg-blue-600 file:text-white
+    hover:file:bg-blue-700"
                   />
                 </label>
                 <label>
@@ -491,8 +550,15 @@ export default function App() {
                   <input
                     type="file"
                     name="bank_statement"
+                    accept="image/*,.pdf"
+                    multiple
                     onChange={onFileChange}
-                    className="file-input"
+                    className=" block w-full text-sm text-gray-700
+    file:mr-4 file:py-2 file:px-4
+    file:rounded-lg file:border-0
+    file:text-sm file:font-medium
+    file:bg-blue-600 file:text-white
+    hover:file:bg-blue-700"
                   />
                 </label>
                 {cardFraud && (
@@ -501,6 +567,8 @@ export default function App() {
                     <input
                       type="file"
                       name="card_copy"
+                      accept="image/*,.pdf"
+                      multiple
                       onChange={onFileChange}
                       className="file-input"
                     />
@@ -511,8 +579,15 @@ export default function App() {
                   <input
                     type="file"
                     name="other_doc"
+                    accept="image/*,.pdf"
+                    multiple
                     onChange={onFileChange}
-                    className="file-input"
+                    className=" block w-full text-sm text-gray-700
+    file:mr-4 file:py-2 file:px-4
+    file:rounded-lg file:border-0
+    file:text-sm file:font-medium
+    file:bg-blue-600 file:text-white
+    hover:file:bg-blue-700"
                   />
                 </label>
               </div>
@@ -530,7 +605,7 @@ export default function App() {
 
             {status?.error && (
               <p className="text-red-600 text-center font-medium mt-2">
-                {status.error}
+                {"Something went wrong. Please try again after sometime."}
               </p>
             )}
           </form>

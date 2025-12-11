@@ -56,24 +56,33 @@
 
 
 import React, { useState } from "react";
-import { useLoginMutation } from "../hooks/useLoginMutation";
-import { useNavigate } from "react-router-dom";
+
+import { replace, useNavigate } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
+import { Login } from "../features/admin/mutationFunctions";
 
 export default function LoginPage() {
-  const loginMutation = useLoginMutation();
+  
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("cybercellssd@gmail.com");
   const [password, setPassword] = useState("$Ssd#@2025");
 
+
+  const {mutate, isPending, isError, error} = useMutation({
+    mutationFn:Login,
+    onSuccess:async()=>{
+      navigate('/dashboard',{ replace:true})
+    },
+    onError:async()=>{
+
+    }
+  })
   const handleLogin = (e) => {
     e.preventDefault();
-    loginMutation.mutate(
-      { email, password },
-      {
-        onSuccess: () => navigate("/dashboard", { replace: true }),
-      }
-    );
+   mutate(
+      { email, password })
+      
   };
 
   return (
@@ -93,9 +102,9 @@ export default function LoginPage() {
           <p className="text-sm text-gray-600">Admin Login Portal</p>
         </div>
 
-        {loginMutation.isError && (
+        {isError && (
           <p className="text-red-600 text-sm mb-3 text-center">
-            {loginMutation.error.response?.data?.message || "Login failed"}
+            {error.response?.data?.message || "Login failed"}
           </p>
         )}
 
@@ -125,15 +134,15 @@ export default function LoginPage() {
           </div>
 
           <button
-            disabled={loginMutation.isPending}
+            disabled={isPending}
             className={`w-full py-2 rounded-lg text-white font-semibold transition
               ${
-                loginMutation.isPending
+                isPending
                   ? "bg-blue-400 cursor-not-allowed"
                   : "bg-blue-700 hover:bg-blue-800"
               }`}
           >
-            {loginMutation.isPending ? "Verifying..." : "Login"}
+            {isPending ? "Verifying..." : "Login"}
           </button>
         </form>
 
