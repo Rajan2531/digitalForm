@@ -546,12 +546,14 @@ export default function App() {
                   />
                 </label>
                 <label>
-                  Bank Statement / UPI Screenshot:
+                  Bank Statement / UPI Screenshot:<span className="text-red-500">*</span> 
+
                   <input
                     type="file"
                     name="bank_statement"
                     accept="image/*,.pdf"
                     multiple
+                    required
                     onChange={onFileChange}
                     className=" block w-full text-sm text-gray-700
     file:mr-4 file:py-2 file:px-4
