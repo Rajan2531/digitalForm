@@ -238,7 +238,7 @@ export default function App() {
                   NCRP No. (If any)
                   
                   <input
-                    name="gd_case_no"
+                    name="ncrp"
                     value={form.ncrp}
                     
                     onChange={onChange}

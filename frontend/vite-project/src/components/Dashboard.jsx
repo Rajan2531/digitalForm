@@ -2240,7 +2240,7 @@ export default function Dashboard() {
   // -----------------------------
   const total = data.length;
   const unread = data.filter((c) => !c.isRead).length;
-  const highValue = data.filter((c) => c.total_amount > 100000).length;
+  const highValue = data.filter((c) => c.total_amount > 500000).length;
 
   const stationStats = Object.values(
     data.reduce((acc, c) => {
