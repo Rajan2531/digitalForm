@@ -57,6 +57,7 @@ exports.createComplaint = async (req, res, next) => {
       card_last4,
       card_type,
       issuing_bank,
+      ncrp
     } = req.body;
 
     // Parse bank + transactions array
@@ -75,6 +76,7 @@ exports.createComplaint = async (req, res, next) => {
     const complaint = await Complaint.create({
       police_station,
       gd_case_no,
+      ncrp,
       complainant_name,
       relation,
       profession,
@@ -94,6 +96,7 @@ exports.createComplaint = async (req, res, next) => {
       // Banks & files
       banks,
       files,
+      
 
       // Optional card-fraud fields
       card_holder,

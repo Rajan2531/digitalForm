@@ -183,6 +183,7 @@ exports.getPDF = catchAsync(async (req, res, next) => {
   kv("Complaint ID", complaint.complaint_id);
   kv("Created At", new Date(complaint.createdAt).toLocaleString());
   kv("GD Number", complaint.gd_case_no);
+  kv("NCRP Number", complaint.ncrp)
   kv("Police Station", complaint.police_station);
 
   // ---------------------------------------------

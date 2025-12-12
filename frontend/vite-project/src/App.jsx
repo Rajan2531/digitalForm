@@ -20,6 +20,7 @@ export default function App() {
     amount_to: "",
     fraud_description: "",
     fraudster_phone: "", // ✅ new
+    ncrp:""
   });
 
   const [banks, setBanks] = useState([
@@ -234,6 +235,17 @@ export default function App() {
                 </label>
 
                 <label>
+                  NCRP No. (If any)
+                  
+                  <input
+                    name="gd_case_no"
+                    value={form.ncrp}
+                    
+                    onChange={onChange}
+                    className="input"
+                  />
+                </label>
+                <label>
                   Complainant Name:<span className="text-red-500">*</span>
                   <input
                     name="complainant_name"
@@ -267,10 +279,11 @@ export default function App() {
 
                 {/* ✅ New Fields Start Here */}
                 <label>
-                  Date of Birth:
+                  Date of Birth:<span className="text-red-500">*</span>
                   <input
                     type="date"
                     name="dob"
+                    required
                     value={form.dob || ""}
                     onChange={onChange}
                     className="input"
@@ -278,12 +291,13 @@ export default function App() {
                 </label>
 
                 <label>
-                  Age:
+                  Age:<span className="text-red-500">*</span>
                   <input
                     type="number"
                     name="age"
                     min="0"
                     max="120"
+                    required
                     value={form.age || ""}
                     onChange={onChange}
                     className="input"
@@ -308,7 +322,7 @@ export default function App() {
                 {/* ✅ New Fields End */}
 
                 <label className="sm:col-span-2">
-                  Complainant's Address (Present):
+                  Complainant's Address (Present):<span className="text-red-500">*</span>
                   <textarea
                     name="present_address"
                     value={form.present_address}
@@ -355,10 +369,11 @@ export default function App() {
               </legend>
               <div className="grid sm:grid-cols-3 gap-4 mt-3">
                 <label>
-                  Fraud Amount (₹)
+                  Fraud Amount (₹)<span className="text-red-500">*</span>
                   <input
                     type="number"
                     name="total_amount"
+                    required
                     value={form.total_amount}
                     onChange={onChange}
                     placeholder="##00.00"
@@ -366,20 +381,22 @@ export default function App() {
                   />
                 </label>
                 <label>
-                  From Date
+                  From Date<span className="text-red-500">*</span>
                   <input
                     type="date"
                     name="amount_from"
+                    required
                     value={form.amount_from}
                     onChange={onChange}
                     className="input"
                   />
                 </label>
                 <label>
-                  To Date
+                  To Date<span className="text-red-500">*</span>
                   <input
                     type="date"
                     name="amount_to"
+                    required
                     value={form.amount_to}
                     onChange={onChange}
                     className="input"
@@ -387,10 +404,11 @@ export default function App() {
                 </label>
 
                 <label className="sm:col-span-3">
-                  Type of Fraud / Brief Facts
+                  Type of Fraud / Brief Facts<span className="text-red-500">*</span>
                   <textarea
                     name="fraud_description"
                     value={form.fraud_description}
+                    required
                     onChange={onChange}
                     rows={3}
                     className="input"
