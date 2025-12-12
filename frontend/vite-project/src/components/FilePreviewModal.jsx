@@ -258,7 +258,7 @@ export default function ComplaintFullView({ complaint, apiBase, onClose, refresh
                 {editMode ? (
                   <input className="w-full px-3 py-2 border rounded-md bg-slate-50"
                     value={form.ncrp || ""}
-                    onChange={(e) => updateField("gd_case_no", e.target.value)}
+                    onChange={(e) => updateField("ncrp", e.target.value)}
                   />
                 ) : (
                   <div className="font-medium">{form.ncrp || "—"}</div>
