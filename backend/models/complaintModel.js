@@ -13,6 +13,7 @@ const ComplaintSchema = new mongoose.Schema(
     // Basic Details
     police_station: String,
     gd_case_no: String,
+    ncrp:String,
     complainant_name: String,
     relation: String,
     profession: String,
