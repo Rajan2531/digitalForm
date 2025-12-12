@@ -380,6 +380,17 @@ export default function ComplaintFullView({ complaint, apiBase, onClose, refresh
                   <option>Other</option>
                 </select>
               </div>
+
+              <div>
+                <FieldLabel>Address(Present)</FieldLabel>
+                <input readOnly={!editMode}
+                  value={form.present_address || ""}
+                  onChange={(e) => updateField("present_address", e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md ${editMode ? "bg-slate-50" : ""}`}
+                />
+              </div>
+
+
             </div>
           </div>
         </div>

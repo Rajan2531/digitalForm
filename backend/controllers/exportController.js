@@ -196,13 +196,14 @@ exports.getPDF = catchAsync(async (req, res, next) => {
   kv("DOB", complaint.dob);
   kv("Age", complaint.age);
   kv("Sex", complaint.sex);
+  kv("Address", complaint.present_address)
 
   // ---------------------------------------------
   // FRAUD INFORMATION
   // ---------------------------------------------
   section("Fraud Information");
   kv("Fraudster Phone", complaint.fraudster_phone);
-  kv("Amount Lost", `₹${(complaint.total_amount || 0).toLocaleString()}`);
+  kv("Amount Lost", `Rs ${(complaint.total_amount || 0).toLocaleString()}`);
 
   doc.moveDown(0.5);
   doc.fontSize(13).fillColor("#111827").text("Fraud Description:");
@@ -271,7 +272,7 @@ exports.getPDF = catchAsync(async (req, res, next) => {
         doc.text(tx.refNo || "—", 50, rowY, { width: 150 });
         doc.text(tx.date || "—", 200, rowY, { width: 100 });
         doc.text(tx.time || "—", 300, rowY, { width: 100 });
-        doc.text(tx.amount ? `₹${tx.amount}` : "—", 410, rowY);
+        doc.text(tx.amount ? `Rs ${tx.amount}` : "—", 410, rowY);
 
         doc.moveDown(1.5);
       });
