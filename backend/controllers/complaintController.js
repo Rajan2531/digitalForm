@@ -34,7 +34,7 @@ const XLSX = require("xlsx");
 
 exports.createComplaint = async (req, res, next) => {
   try {
-    const {
+    let {
       police_station,
       gd_case_no,
       complainant_name,
@@ -53,13 +53,10 @@ exports.createComplaint = async (req, res, next) => {
       fraudster_phone,
 
       // Optional card fraud fields
-      card_holder,
-      card_last4,
-      card_type,
-      issuing_bank,
+      cards,
       ncrp
     } = req.body;
-
+    cards = JSON.parse(cards);
     // Parse bank + transactions array
     const banks = JSON.parse(req.body.transactions || "[]");
 
@@ -73,7 +70,7 @@ exports.createComplaint = async (req, res, next) => {
     };
 
     // Create complaint entry
-    const complaint = await Complaint.create({
+    let complaint = await Complaint.create({
       police_station,
       gd_case_no,
       ncrp,
@@ -99,10 +96,7 @@ exports.createComplaint = async (req, res, next) => {
       
 
       // Optional card-fraud fields
-      card_holder,
-      card_last4,
-      card_type,
-      issuing_bank,
+      cards
     });
 
     res.status(200).json({
@@ -123,6 +117,18 @@ exports.getAllComplaints = async (req, res, next) => {
   try {
     const complaints = await Complaint.find().sort({ createdAt: -1 });
     res.json({ ok: true, data: complaints });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, error: "Failed to load complaints" });
+  }
+};
+
+exports.getComplaint = async (req, res, next) => {
+  try {
+    const complaintId = req.params.id;
+    console.log("complaintId: ", complaintId)
+    const complaint = await Complaint.findById({_id:complaintId});
+    res.json({ ok: true, data: complaint });
   } catch (err) {
     console.error(err);
     res.status(500).json({ ok: false, error: "Failed to load complaints" });

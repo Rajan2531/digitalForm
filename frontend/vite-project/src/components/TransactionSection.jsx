@@ -18,7 +18,7 @@ export default function TransactionSection({ index, bank, updateBank }) {
   };
 
   const addTransaction = () => {
-    if (bank.transactions.length < 7) {
+    if (bank.transactions.length < 50) {
       updateBank(index, {
         ...bank,
         transactions: [
@@ -102,7 +102,7 @@ export default function TransactionSection({ index, bank, updateBank }) {
               <h4 className="text-gray-700 font-semibold text-sm sm:text-base">
                 Transaction Details
               </h4>
-              <span className="text-xs text-gray-500">(Up to 7 entries)</span>
+              <span className="text-xs text-gray-500">(Up to 50 entries)</span>
             </div>
 
             {/* Desktop Table View */}
@@ -237,7 +237,7 @@ export default function TransactionSection({ index, bank, updateBank }) {
             </div>
 
             {/* Add Transaction Button */}
-            {bank.transactions.length < 7 && (
+            {bank.transactions.length < 50 && (
               <button
                 type="button"
                 onClick={addTransaction}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import TransactionSection from "./components/TransactionSection";
 
@@ -22,6 +22,15 @@ export default function App() {
     fraudster_phone: "", // ✅ new
     ncrp:""
   });
+  const [cards, setCards] = useState([
+  {
+    card_holder: "",
+    card_number: "",
+    card_type: "",
+    issuing_bank: "",
+  },
+]);
+
 
   const [banks, setBanks] = useState([
     {
@@ -36,6 +45,31 @@ export default function App() {
   const [status, setStatus] = useState(null);
   const [submitted, setSubmitted] = useState(false);
   const [cardFraud, setCardFraud] = useState(false); // ✅ toggle for card fraud
+
+
+
+  const updateCard = (index, key, value) => {
+  setCards((prev) =>
+    prev.map((c, i) => (i === index ? { ...c, [key]: value } : c))
+  );
+};
+
+const addCard = () => {
+  setCards((prev) => [
+    ...prev,
+    {
+      card_holder: "",
+      card_number: "",
+      card_type: "",
+      issuing_bank: "",
+    },
+  ]);
+};
+
+const removeCard = (index) => {
+  setCards((prev) => prev.filter((_, i) => i !== index));
+};
+
 
   // function to handle changes in value of the form in input field.
   const onChange = (e) => {
@@ -65,6 +99,20 @@ export default function App() {
     }));
   };
 
+
+  useEffect(() => {
+  if (!cardFraud) {
+    setCards([
+      {
+        card_holder: "",
+        card_number: "",
+        card_type: "",
+        issuing_bank: "",
+      },
+    ]);
+  }
+}, [cardFraud]);
+
   // function to handle addition of new banks
   const updateBank = (i, newData) => {
     setBanks((prev) => prev.map((b, idx) => (idx === i ? newData : b)));
@@ -87,6 +135,8 @@ export default function App() {
       const data = new FormData();
       Object.keys(form).forEach((k) => data.append(k, form[k] || ""));
       data.append("transactions", JSON.stringify(banks));
+      data.append("cards", JSON.stringify(cards));
+
 
       // ["aadhar", "gd_copy", "bank_statement", "card_copy", "other_doc"].forEach(
       //   (f) => {
@@ -224,11 +274,11 @@ export default function App() {
 
                 <label>
                   General Diary No. / Case No.
-                  <span className="text-red-500">*</span>
+                  
                   <input
                     name="gd_case_no"
                     value={form.gd_case_no}
-                    required
+                    
                     onChange={onChange}
                     className="input"
                   />
@@ -392,11 +442,11 @@ export default function App() {
                   />
                 </label>
                 <label>
-                  To Date<span className="text-red-500">*</span>
+                  To Date
                   <input
                     type="date"
                     name="amount_to"
-                    required
+                    
                     value={form.amount_to}
                     onChange={onChange}
                     className="input"
@@ -495,6 +545,94 @@ export default function App() {
               </fieldset>
             )}
 
+            {cardFraud && (
+  <fieldset className="border border-gray-200 rounded-lg p-4 sm:p-6 bg-blue-50/30">
+    <legend className="text-blue-700 font-semibold px-2">
+      Card Details (You can add multiple cards)
+    </legend>
+
+    <div className="space-y-4 mt-3">
+      {cards.map((card, i) => (
+        <div
+          key={i}
+          className="border rounded-lg p-4 bg-white shadow-sm relative"
+        >
+          <div className="grid sm:grid-cols-2 gap-4">
+            <label>
+              Card Holder Name
+              <input
+                value={card.card_holder}
+                onChange={(e) =>
+                  updateCard(i, "card_holder", e.target.value)
+                }
+                className="input"
+              />
+            </label>
+
+            <label>
+              Card Number (last 4 / full)
+              <input
+                value={card.card_number}
+                maxLength={16}
+                onChange={(e) =>
+                  updateCard(i, "card_number", e.target.value)
+                }
+                className="input"
+              />
+            </label>
+
+            <label>
+              Card Type
+              <select
+                value={card.card_type}
+                onChange={(e) =>
+                  updateCard(i, "card_type", e.target.value)
+                }
+                className="input"
+              >
+                <option value="">Select</option>
+                <option value="Credit Card">Credit Card</option>
+                <option value="Debit Card">Debit Card</option>
+              </select>
+            </label>
+
+            <label>
+              Issuing Bank
+              <input
+                value={card.issuing_bank}
+                onChange={(e) =>
+                  updateCard(i, "issuing_bank", e.target.value)
+                }
+                className="input"
+              />
+            </label>
+          </div>
+
+          {cards.length > 1 && (
+            <button
+              type="button"
+              onClick={() => removeCard(i)}
+              className="absolute top-2 right-2 text-sm text-red-600 hover:underline"
+            >
+              Remove
+            </button>
+          )}
+        </div>
+      ))}
+
+      {cards.length < 5 && (
+        <button
+          type="button"
+          onClick={addCard}
+          className="text-blue-700 font-medium hover:text-blue-900"
+        >
+          + Add Another Card
+        </button>
+      )}
+    </div>
+  </fieldset>
+)}
+
             {/* bank section */}
             {/* Transaction Section */}
             <fieldset className="border border-gray-200 rounded-lg p-4 sm:p-6">
@@ -511,7 +649,7 @@ export default function App() {
                   />
                 ))}
               </div>
-              {banks.length < 3 && (
+              {banks.length < 20 && (
                 <button
                   type="button"
                   onClick={addBankSection}
@@ -545,12 +683,12 @@ export default function App() {
                   />
                 </label>
                 <label>
-                  FIR / GD Copy <span className="text-red-500">*</span>
+                  FIR / GD Copy 
                   <input
                     type="file"
                     name="gd_copy"
                     accept="image/*,.pdf"
-                    required
+                  
                     onChange={onFileChange}
                     className=" block w-full text-sm text-gray-700
     file:mr-4 file:py-2 file:px-4

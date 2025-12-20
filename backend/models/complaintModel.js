@@ -3,6 +3,14 @@
 
 const mongoose = require("mongoose");
 
+const cardSchema = new mongoose.Schema({
+  card_holder: String,
+    card_number: String,
+    card_type: String,
+    issuing_bank: String,
+})
+
+
 const ComplaintSchema = new mongoose.Schema(
   {
     complaint_id: {
@@ -52,10 +60,12 @@ const ComplaintSchema = new mongoose.Schema(
     ],
 
     // OPTIONAL Card Fraud Section
-    card_holder: String,
-    card_last4: String,
-    card_type: String,
-    issuing_bank: String,
+   
+  cards:{
+    type:[cardSchema],
+    default:[]
+  },
+
 
     // Uploaded Files
     files: {

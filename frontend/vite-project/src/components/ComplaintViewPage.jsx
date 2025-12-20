@@ -2,7 +2,13 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-const apiBase = import.meta.env.VITE_BASE_URL
+import { useQuery } from "@tanstack/react-query";
+import { GetComplaint } from "../features/complaints/queryFunctions";
+import { useNavigate, useParams } from "react-router-dom";
+import { Link } from "react-router-dom";
+import queryClient from "../context/queryClient";
+
+const apiBase = import.meta.env.VITE_API_BASE
 /**
  * ComplaintFullView  —  CRM UI + Highlighted Labels (STYLE 1)
  *
@@ -16,14 +22,30 @@ const apiBase = import.meta.env.VITE_BASE_URL
  * - Full UI polish
  */
 
-export default function ComplaintFullView({ complaint, apiBase, onClose, refresh }) {
+export default function ComplaintFullView() {
   const [editMode, setEditMode] = useState(false);
-  const [form, setForm] = useState(complaint ? JSON.parse(JSON.stringify(complaint)) : {});
+  const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
+  
 
+  const navigate = useNavigate();
 
+  const {id:complaintId} = useParams();
+  console.log(complaintId)
+  const {data:complaint, isPending} = useQuery({
+    queryKey:["complaint", complaintId],
+    queryFn:async()=>GetComplaint(complaintId),
+    staleTime:10 * 60 * 1000,
+    
+  })
+  
+  useEffect(()=>{
+    setForm(complaint);
+  },[complaint])
+  
 
-
+  console.log(complaint)
+ 
   // accordion + sort
   const [bankUI, setBankUI] = useState(() =>
     (complaint?.banks || []).map(() => ({ expanded: true, sortBy: "date", sortDir: "desc" }))
@@ -116,7 +138,10 @@ export default function ComplaintFullView({ complaint, apiBase, onClose, refresh
       setSaving(true);
       await axios.patch(`${apiBase}/api/v1/complaints/${form._id}/update`, form, {withCredentials:true});
       setEditMode(false);
-      refresh?.();
+      // refresh?.();
+      await queryClient.invalidateQueries({
+      queryKey: ["complaint"],
+    });
       alert("Updated successfully");
     } catch (err) {
       console.error(err);
@@ -142,24 +167,49 @@ export default function ComplaintFullView({ complaint, apiBase, onClose, refresh
     );
   };
 
-  const getSortedTransactions = (bankIndex, txList) => {
-    const ui = bankUI[bankIndex];
-    const list = [...(txList || [])];
-    const { sortBy, sortDir } = ui;
-    const dir = sortDir === "asc" ? 1 : -1;
+  // const getSortedTransactions = (bankIndex, txList) => {
+  //   const ui = bankUI?.[bankIndex];
+  //   const list = [...(txList || [])];
+  //   const { sortBy, sortDir } = ui;
+  //   const dir = sortDir === "asc" ? 1 : -1;
 
-    return list.sort((a, b) => {
-      if (sortBy === "amount") return (Number(a.amount) - Number(b.amount)) * dir;
-      if (sortBy === "refNo") return (a.refNo || "").localeCompare(b.refNo || "") * dir;
-      if (sortBy === "time") return (a.time || "").localeCompare(b.time || "") * dir;
-      if (sortBy === "date") {
-        const da = a.date ? new Date(a.date).getTime() : 0;
-        const db = b.date ? new Date(b.date).getTime() : 0;
-        return (da - db) * dir;
-      }
-      return 0;
-    });
-  };
+  //   return list.sort((a, b) => {
+  //     if (sortBy === "amount") return (Number(a.amount) - Number(b.amount)) * dir;
+  //     if (sortBy === "refNo") return (a.refNo || "").localeCompare(b.refNo || "") * dir;
+  //     if (sortBy === "time") return (a.time || "").localeCompare(b.time || "") * dir;
+  //     if (sortBy === "date") {
+  //       const da = a.date ? new Date(a.date).getTime() : 0;
+  //       const db = b.date ? new Date(b.date).getTime() : 0;
+  //       return (da - db) * dir;
+  //     }
+  //     return 0;
+  //   });
+  // };
+
+  const getSortedTransactions = (bankIndex, txList) => {
+  const ui =
+    bankUI?.[bankIndex] ?? { sortBy: "date", sortDir: "desc" };
+
+  const list = [...(txList || [])];
+  const { sortBy, sortDir } = ui;
+  const dir = sortDir === "asc" ? 1 : -1;
+
+  return list.sort((a, b) => {
+    if (sortBy === "amount")
+      return (Number(a.amount) - Number(b.amount)) * dir;
+    if (sortBy === "refNo")
+      return (a.refNo || "").localeCompare(b.refNo || "") * dir;
+    if (sortBy === "time")
+      return (a.time || "").localeCompare(b.time || "") * dir;
+    if (sortBy === "date") {
+      const da = a.date ? new Date(a.date).getTime() : 0;
+      const db = b.date ? new Date(b.date).getTime() : 0;
+      return (da - db) * dir;
+    }
+    return 0;
+  });
+};
+
 
   // ---------------------------------------
   // LABEL STYLE 1
@@ -189,7 +239,10 @@ export default function ComplaintFullView({ complaint, apiBase, onClose, refresh
       <path d="M7 7h6M7 10h4M7 13h2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
     </svg>
   );
-
+  
+   if(isPending){
+    return <h1>loading</h1>
+  }
   return (
     <div className="fixed inset-0 bg-slate-50 overflow-y-auto z-50">
       {/* Header */}
@@ -202,7 +255,7 @@ export default function ComplaintFullView({ complaint, apiBase, onClose, refresh
         </div>
 
         <div className="flex gap-2">
-          <button onClick={onClose} className="px-3 py-2 text-sm bg-slate-100 rounded-md">
+          <button onClick={()=>{navigate(-1)}} className="px-3 py-2 text-sm bg-slate-100 rounded-md">
             ← Back
           </button>
 
@@ -261,7 +314,7 @@ export default function ComplaintFullView({ complaint, apiBase, onClose, refresh
                     onChange={(e) => updateField("ncrp", e.target.value)}
                   />
                 ) : (
-                  <div className="font-medium">{form.ncrp || "—"}</div>
+                  <div className="font-medium"><Link to = "https://cyberpolice.nic.in" target="new">{form.ncrp || "—"}</Link></div>
                 )}
               </div>
 
@@ -422,7 +475,12 @@ export default function ComplaintFullView({ complaint, apiBase, onClose, refresh
           </div>
 
           {(form.banks || []).map((bank, bi) => {
-            const ui = bankUI[bi];
+            const ui = bankUI?.[bi] ?? {
+  expanded: true,
+  sortBy: "date",
+  sortDir: "desc",
+};
+
             const sortedTx = getSortedTransactions(bi, bank.transactions || []);
 
             return (
@@ -605,6 +663,114 @@ export default function ComplaintFullView({ complaint, apiBase, onClose, refresh
             );
           })}
         </div>
+        
+        {/* --------------------------------------- */}
+{/* CARD DETAILS */}
+{/* --------------------------------------- */}
+{Array.isArray(form.cards) && form.cards.length > 0 && (
+  <div className="bg-white p-6 rounded-xl border shadow-sm">
+    <FieldLabel>Card Details</FieldLabel>
+
+    <div className="mt-4 space-y-4">
+      {form.cards.map((card, ci) => (
+        <div
+          key={ci}
+          className="border rounded-lg p-4 bg-slate-50 relative"
+        >
+          <div className="grid sm:grid-cols-2 gap-4">
+            {/* Card Holder */}
+            <div>
+              <FieldLabel>Card Holder</FieldLabel>
+              {editMode ? (
+                <input
+                  value={card.card_holder || ""}
+                  onChange={(e) => {
+                    const cards = [...form.cards];
+                    cards[ci].card_holder = e.target.value;
+                    updateField("cards", cards);
+                  }}
+                  className="w-full px-3 py-2 border rounded-md bg-white"
+                />
+              ) : (
+                <div className="font-medium">
+                  {card.card_holder || "—"}
+                </div>
+              )}
+            </div>
+
+            {/* Card Number */}
+            <div>
+              <FieldLabel>Card Number</FieldLabel>
+              <div className="font-mono font-semibold text-indigo-700">
+                {card.card_number
+                  ? `•••• •••• •••• ${card.card_number.slice(-4)}`
+                  : "—"}
+              </div>
+            </div>
+
+            {/* Card Type */}
+            <div>
+              <FieldLabel>Card Type</FieldLabel>
+              {editMode ? (
+                <select
+                  value={card.card_type || ""}
+                  onChange={(e) => {
+                    const cards = [...form.cards];
+                    cards[ci].card_type = e.target.value;
+                    updateField("cards", cards);
+                  }}
+                  className="w-full px-3 py-2 border rounded-md bg-white"
+                >
+                  <option value="">Select</option>
+                  <option value="Credit Card">Credit Card</option>
+                  <option value="Debit Card">Debit Card</option>
+                </select>
+              ) : (
+                <div className="font-medium">
+                  {card.card_type || "—"}
+                </div>
+              )}
+            </div>
+
+            {/* Issuing Bank */}
+            <div>
+              <FieldLabel>Issuing Bank</FieldLabel>
+              {editMode ? (
+                <input
+                  value={card.issuing_bank || ""}
+                  onChange={(e) => {
+                    const cards = [...form.cards];
+                    cards[ci].issuing_bank = e.target.value;
+                    updateField("cards", cards);
+                  }}
+                  className="w-full px-3 py-2 border rounded-md bg-white"
+                />
+              ) : (
+                <div className="font-medium">
+                  {card.issuing_bank || "—"}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Remove Card */}
+          {editMode && (
+            <button
+              onClick={() => {
+                const cards = form.cards.filter((_, i) => i !== ci);
+                updateField("cards", cards);
+              }}
+              className="absolute top-2 right-2 text-sm text-rose-600 hover:underline"
+            >
+              Remove
+            </button>
+          )}
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
 
         {/* --------------------------------------- */}
         {/* DOCUMENTS */}
@@ -705,359 +871,3 @@ export default function ComplaintFullView({ complaint, apiBase, onClose, refresh
     </div>
   );
 }
-
-
-// import React, { useEffect, useState } from "react";
-// import axios from "axios";
-
-// export default function ComplaintFullView({
-//   complaint,
-//   apiBase,
-//   onClose,
-//   refresh,
-// }) {
-//   const [editMode, setEditMode] = useState(false);
-//   const [saving, setSaving] = useState(false);
-//   const [form, setForm] = useState(
-//     complaint ? JSON.parse(JSON.stringify(complaint)) : {}
-//   );
-
-//   const [bankUI, setBankUI] = useState(
-//     (complaint?.banks || []).map(() => ({
-//       expanded: true,
-//       sortBy: "date",
-//       sortDir: "desc",
-//     }))
-//   );
-
-//   /* ------------------- EFFECTS ------------------- */
-
-//   useEffect(() => {
-//     setForm(complaint ? JSON.parse(JSON.stringify(complaint)) : {});
-//     setBankUI(
-//       (complaint?.banks || []).map(() => ({
-//         expanded: true,
-//         sortBy: "date",
-//         sortDir: "desc",
-//       }))
-//     );
-//   }, [complaint]);
-
-//   /* ------------------- HELPERS ------------------- */
-
-//   const FieldLabel = ({ children }) => (
-//     <div className="inline-block mb-1 px-2 py-0.5 bg-indigo-50 text-indigo-700 text-xs font-bold rounded">
-//       {children}
-//     </div>
-//   );
-
-//   const updateField = (key, value) =>
-//     setForm((f) => ({ ...f, [key]: value }));
-
-//   const mask = (acc) => {
-//     if (!acc) return "—";
-//     if (acc.length < 8) return acc;
-//     return acc.slice(0, 4) + " •••• " + acc.slice(-2);
-//   };
-
-//   /* ------------------- BANK LOGIC ------------------- */
-
-//   const updateBankField = (i, key, value) => {
-//     setForm((f) => {
-//       const banks = [...(f.banks || [])];
-//       banks[i] = { ...banks[i], [key]: value };
-//       return { ...f, banks };
-//     });
-//   };
-
-//   const updateTx = (bi, ti, key, value) => {
-//     setForm((f) => {
-//       const banks = [...f.banks];
-//       const txs = [...banks[bi].transactions];
-//       txs[ti] = { ...txs[ti], [key]: value };
-//       banks[bi].transactions = txs;
-//       return { ...f, banks };
-//     });
-//   };
-
-//   const toggleSort = (bi, col) => {
-//     setBankUI((prev) =>
-//       prev.map((u, i) =>
-//         i === bi
-//           ? {
-//               ...u,
-//               sortBy: col,
-//               sortDir: u.sortBy === col && u.sortDir === "asc" ? "desc" : "asc",
-//             }
-//           : u
-//       )
-//     );
-//   };
-
-//   const sortedTx = (bi, list = []) => {
-//     const { sortBy, sortDir } = bankUI[bi];
-//     const dir = sortDir === "asc" ? 1 : -1;
-
-//     return [...list].sort((a, b) => {
-//       if (sortBy === "amount") return (a.amount - b.amount) * dir;
-//       if (sortBy === "refNo")
-//         return (a.refNo || "").localeCompare(b.refNo || "") * dir;
-//       if (sortBy === "date")
-//         return (new Date(a.date) - new Date(b.date)) * dir;
-//       return 0;
-//     });
-//   };
-
-//   /* ------------------- SAVE ------------------- */
-
-//   const saveChanges = async () => {
-//     try {
-//       setSaving(true);
-//       await axios.patch(
-//         `${apiBase}/api/v1/complaints/${form._id}/update`,
-//         form,
-//         { withCredentials: true }
-//       );
-//       refresh?.();
-//       setEditMode(false);
-//       alert("Saved successfully");
-//     } catch (e) {
-//       alert("Save failed");
-//     } finally {
-//       setSaving(false);
-//     }
-//   };
-
-//   /* ------------------- RENDER ------------------- */
-
-//   return (
-//     <div className="fixed inset-0 bg-slate-50 overflow-y-auto z-50">
-//       {/* HEADER */}
-//       <div className="sticky top-0 bg-white border-b px-6 py-3 flex justify-between z-40">
-//         <div>
-//           <div className="text-xl font-bold text-slate-900">
-//             {form.complaint_id}
-//           </div>
-//           <div className="text-xs text-slate-500">
-//             {form.createdAt &&
-//               new Date(form.createdAt).toLocaleString()}
-//           </div>
-//         </div>
-
-//         <div className="flex gap-2">
-//           <button
-//             onClick={onClose}
-//             className="px-3 py-2 bg-slate-100 rounded"
-//           >
-//             ← Back
-//           </button>
-
-//           <button
-//             onClick={() => setEditMode((s) => !s)}
-//             className={`px-3 py-2 text-white rounded ${
-//               editMode ? "bg-rose-600" : "bg-indigo-600"
-//             }`}
-//           >
-//             {editMode ? "Cancel" : "Edit"}
-//           </button>
-//         </div>
-//       </div>
-
-//       {/* BODY */}
-//       <div className="max-w-7xl mx-auto p-6 space-y-8">
-
-//         {/* COMPLAINT INFO */}
-//         <div className="bg-white p-6 rounded-xl border shadow">
-//           <FieldLabel>Complaint Information</FieldLabel>
-
-//           <div className="grid md:grid-cols-2 gap-4 mt-4">
-//             <div>
-//               <FieldLabel>Police Station</FieldLabel>
-//               <input
-//                 readOnly={!editMode}
-//                 value={form.police_station || ""}
-//                 onChange={(e) =>
-//                   updateField("police_station", e.target.value)
-//                 }
-//                 className="w-full border px-3 py-2 rounded"
-//               />
-//             </div>
-
-//             <div>
-//               <FieldLabel>Fraud Amount</FieldLabel>
-//               <input
-//                 type="number"
-//                 readOnly={!editMode}
-//                 value={form.total_amount || ""}
-//                 onChange={(e) =>
-//                   updateField("total_amount", e.target.value)
-//                 }
-//                 className="w-full border px-3 py-2 rounded"
-//               />
-//             </div>
-//           </div>
-
-//           <div className="mt-4">
-//             <FieldLabel>Description</FieldLabel>
-//             <textarea
-//               rows={4}
-//               readOnly={!editMode}
-//               value={form.fraud_description || ""}
-//               onChange={(e) =>
-//                 updateField("fraud_description", e.target.value)
-//               }
-//               className="w-full border p-3 rounded"
-//             />
-//           </div>
-//         </div>
-
-//         {/* BANKS */}
-//         {(form.banks || []).map((bank, bi) => (
-//           <div
-//             key={bi}
-//             className="bg-white border rounded-xl shadow p-5"
-//           >
-//             <div className="font-semibold">
-//               {bank.bank_name || `Bank ${bi + 1}`}
-//             </div>
-//             <div className="text-xs text-slate-500">
-//               {mask(bank.account_no)} • {bank.ifsc}
-//             </div>
-
-//             <table className="w-full mt-4 text-sm border">
-//               <thead className="bg-slate-100">
-//                 <tr>
-//                   {["refNo", "date", "amount"].map((h) => (
-//                     <th
-//                       key={h}
-//                       onClick={() => toggleSort(bi, h)}
-//                       className="px-3 py-2 cursor-pointer"
-//                     >
-//                       {h.toUpperCase()}
-//                     </th>
-//                   ))}
-//                 </tr>
-//               </thead>
-//               <tbody>
-//                 {sortedTx(bi, bank.transactions).map((tx, ti) => (
-//                   <tr key={ti} className="border-t">
-//                     <td className="px-3 py-2">
-//                       {editMode ? (
-//                         <input
-//                           value={tx.refNo || ""}
-//                           onChange={(e) =>
-//                             updateTx(bi, ti, "refNo", e.target.value)
-//                           }
-//                           className="w-full border px-2 py-1 rounded"
-//                         />
-//                       ) : (
-//                         tx.refNo
-//                       )}
-//                     </td>
-//                     <td className="px-3 py-2">
-//                       {editMode ? (
-//                         <input
-//                           type="date"
-//                           value={tx.date || ""}
-//                           onChange={(e) =>
-//                             updateTx(bi, ti, "date", e.target.value)
-//                           }
-//                           className="border px-2 py-1 rounded"
-//                         />
-//                       ) : (
-//                         tx.date
-//                       )}
-//                     </td>
-//                     <td className="px-3 py-2 text-emerald-700">
-//                       {editMode ? (
-//                         <input
-//                           type="number"
-//                           value={tx.amount || ""}
-//                           onChange={(e) =>
-//                             updateTx(bi, ti, "amount", e.target.value)
-//                           }
-//                           className="border px-2 py-1 rounded"
-//                         />
-//                       ) : (
-//                         `₹${Number(tx.amount).toLocaleString()}`
-//                       )}
-//                     </td>
-//                   </tr>
-//                 ))}
-//               </tbody>
-//             </table>
-//           </div>
-//         ))}
-
-//         {/* DOCUMENTS */}
-//         <div className="bg-white p-6 border rounded-xl shadow">
-//           <FieldLabel>Uploaded Documents</FieldLabel>
-
-//           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-//             {!form.files && (
-//               <div className="italic text-slate-500">
-//                 No documents
-//               </div>
-//             )}
-
-//             {form.files &&
-//               Object.entries(form.files).flatMap(([key, val]) =>
-//                 (Array.isArray(val) ? val : [val]).map(
-//                   (file, i) => {
-//                     const url = file.startsWith("http")
-//                       ? file
-//                       : `${apiBase}/uploads/${file}`;
-
-//                     return (
-//                       <a
-//                         key={i}
-//                         href={url}
-//                         onClick={(e) => {
-//                           e.preventDefault();
-//                           window.open(
-//                             url,
-//                             "_blank",
-//                             "noopener,noreferrer"
-//                           );
-//                         }}
-//                         className="p-4 border rounded bg-slate-50 hover:bg-white flex gap-3"
-//                       >
-//                         📄
-//                         <div>
-//                           <div className="font-semibold">
-//                             {key.replace(/_/g, " ").toUpperCase()}
-//                           </div>
-//                           <div className="text-xs text-slate-500">
-//                             Document {i + 1}
-//                           </div>
-//                         </div>
-//                       </a>
-//                     );
-//                   }
-//                 )
-//               )}
-//           </div>
-//         </div>
-
-//         {/* SAVE */}
-//         {editMode && (
-//           <div className="flex justify-end gap-3">
-//             <button
-//               onClick={() => setEditMode(false)}
-//               className="px-4 py-2 border rounded"
-//             >
-//               Cancel
-//             </button>
-//             <button
-//               onClick={saveChanges}
-//               disabled={saving}
-//               className="px-4 py-2 bg-emerald-600 text-white rounded"
-//             >
-//               {saving ? "Saving..." : "Save Changes"}
-//             </button>
-//           </div>
-//         )}
-//       </div>
-//     </div>
-//   );
-// }

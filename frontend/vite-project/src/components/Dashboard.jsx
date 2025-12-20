@@ -1,5 +1,3 @@
-
-
 // import React, { useEffect, useState } from "react";
 // import axios from "axios";
 // import FilePreviewModal from "../components/FilePreviewModal";
@@ -315,7 +313,6 @@
 //   );
 // }
 
-
 // this is the updated UI (card wise i liked it)
 // import React, { useEffect, useState } from "react";
 // import axios from "axios";
@@ -538,7 +535,6 @@
 //   );
 // }
 
-
 // import React, { useEffect, useState } from "react";
 // import axios from "axios";
 // import FilePreviewModal from "../components/FilePreviewModal";
@@ -744,7 +740,6 @@
 //   );
 // }
 
-
 // import React, { useEffect, useState } from "react";
 // import axios from "axios";
 // import FilePreviewModal from "../components/FilePreviewModal";
@@ -834,7 +829,7 @@
 //   return (
 //     <div className="min-h-screen bg-[#f5f7fa] px-6 py-6">
 //       <div className="max-w-7xl mx-auto">
-        
+
 //         {/* ------------------------- HEADER ------------------------------ */}
 //         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10">
 //           <div>
@@ -894,7 +889,7 @@
 //                     setSelectedComplaint(c);
 //                     if (!c.isRead) markAsRead(c._id);
 //                   }}
-//                   className={`p-6 rounded-2xl bg-white border shadow hover:shadow-lg cursor-pointer transition 
+//                   className={`p-6 rounded-2xl bg-white border shadow hover:shadow-lg cursor-pointer transition
 //                     ${
 //                       !c.isRead
 //                         ? "border-blue-400 shadow-md bg-blue-50"
@@ -969,7 +964,6 @@
 //     </div>
 //   );
 // }
-
 
 // import React, { useEffect, useState } from "react";
 // import axios from "axios";
@@ -1272,8 +1266,6 @@
 //     </div>
 //   );
 // }
-
-
 
 // import React, { useEffect, useState } from "react";
 // import axios from "axios";
@@ -2101,7 +2093,13 @@
 
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import ComplaintFullView from "../components/FilePreviewModal";
+
+import * as XLSX from "xlsx";
+
+
+
+
+
 import {
   BarChart,
   Bar,
@@ -2117,9 +2115,14 @@ import { useMutation } from "@tanstack/react-query";
 
 import { Logout } from "../features/admin/mutationFunctions";
 import queryClient from "../context/queryClient";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
-const API_BASE = import.meta.env.VITE_API_BASE 
+const API_BASE = import.meta.env.VITE_API_BASE;
+
+
+
+
+
 
 /**
  * Dashboard.js
@@ -2144,20 +2147,525 @@ export default function Dashboard() {
   // Fetch complaints
   // -----------------------------
 
+
+//   const exportFullComplaintsToExcel = () => {
+//   console.log("Export clicked", filtered.length);
+//   if (!filtered || filtered.length === 0) {
+//     alert("No complaints to export");
+//     return;
+//   }
+
+//   const exportData = filtered.map((c, index) => {
+//     // Flatten banks summary
+//     const bankCount = c.banks?.length || 0;
+
+//     const totalTransactions =
+//       c.banks?.reduce(
+//         (sum, b) => sum + (b.transactions?.length || 0),
+//         0
+//       ) || 0;
+
+//     return {
+//       // BASIC META
+//       "S.No": index + 1,
+//       "Complaint Mongo ID": c._id,
+//       "Complaint ID": c.complaint_id,
+//       "Created At": c.createdAt,
+//       "Updated At": c.updatedAt,
+//       Read: c.isRead ? "Yes" : "No",
+//       Status: c.status || "Pending",
+
+//       // COMPLAINANT
+//       "Complainant Name": c.complainant_name,
+//       Relation: c.relation,
+//       "Phone Number": c.phone_no,
+//       "Email ID": c.email_id,
+//       Age: c.age,
+//       Sex: c.sex,
+//       DOB: c.dob,
+//       "Present Address": c.present_address,
+
+//       // CASE DETAILS
+//       "GD Case No": c.gd_case_no,
+//       "NCRP No": c.ncrp,
+//       "Police Station": c.police_station,
+//       "Fraud Amount": c.total_amount,
+//       "Fraud Description": c.fraud_description,
+//       "Fraudster Phone": c.fraudster_phone,
+
+//       // BANK SUMMARY
+//       "Number of Banks": bankCount,
+//       "Total Transactions": totalTransactions,
+
+//       // FULL RAW DATA (IMPORTANT)
+//       Banks: JSON.stringify(c.banks || [], null, 2),
+//       Files: JSON.stringify(c.files || {}, null, 2),
+
+//       // SYSTEM
+//       "__exported_at": new Date().toISOString(),
+//     };
+//   });
+
+//   const worksheet = XLSX.utils.json_to_sheet(exportData);
+
+//   // Optional: auto column width
+//   worksheet["!cols"] = Object.keys(exportData[0]).map(() => ({
+//     wch: 25,
+//   }));
+
+//   const workbook = XLSX.utils.book_new();
+//   XLSX.utils.book_append_sheet(workbook, worksheet, "Complaints");
+
+//   const date = new Date().toISOString().slice(0, 10);
+//   XLSX.writeFile(workbook, `Full_Complaints_${date}.xlsx`);
+// };
+
+
+// const exportFullComplaintsToExcel = () => {
+//   if (!filtered || filtered.length === 0) {
+//     alert("No complaints to export");
+//     return;
+//   }
+
+//   /* =====================================
+//      DATA HOLDERS
+//   ===================================== */
+//   const complaints = [];
+//   const banks = [];
+//   const transactions = [];
+
+//   let bankRowPointer = 2;        // Excel row numbers (1 = header)
+//   let transactionRowPointer = 2;
+
+//   /* =====================================
+//      BUILD DATA (NO LINKS YET)
+//   ===================================== */
+//   filtered.forEach((c, ci) => {
+//     // Complaints sheet row
+//     complaints.push({
+//       "S.No": ci + 1,
+//       "Complaint ID": c.complaint_id,
+//       Status: c.status || "Pending",
+//       Read: c.isRead ? "Yes" : "No",
+//       "Police Station": c.police_station,
+//       "Fraud Amount (₹)": c.total_amount || 0,
+//       "Complainant Name": c.complainant_name,
+//       "Created Date": c.createdAt?.slice(0, 10),
+//       "Banks →": "", // placeholder for link
+//     });
+
+//     (c.banks || []).forEach((b, bi) => {
+//       // Banks sheet row
+//       banks.push({
+//         "Complaint ID": c.complaint_id,
+//         "Bank S.No": bi + 1,
+//         "Bank Name": b.bank_name,
+//         "Account No": b.account_no,
+//         IFSC: b.ifsc,
+//         "Transactions →": "", // placeholder for link
+//       });
+
+//       (b.transactions || []).forEach((t, ti) => {
+//         // Transactions sheet row (PIVOT READY)
+//         transactions.push({
+//           "Complaint ID": c.complaint_id,
+//           "Police Station": c.police_station,
+//           "Bank Name": b.bank_name,
+//           "Account No": b.account_no,
+//           "Transaction S.No": ti + 1,
+//           "UTR / Ref": t.refNo,
+//           Date: t.date,
+//           Time: t.time,
+//           "Amount (₹)": Number(t.amount) || 0,
+//         });
+
+//         transactionRowPointer++;
+//       });
+
+//       bankRowPointer++;
+//     });
+//   });
+
+//   /* =====================================
+//      CREATE WORKSHEETS
+//   ===================================== */
+//   const wsComplaints = XLSX.utils.json_to_sheet(complaints);
+//   const wsBanks = XLSX.utils.json_to_sheet(banks);
+//   const wsTransactions = XLSX.utils.json_to_sheet(transactions);
+
+//   /* =====================================
+//      ADD CLICKABLE LINKS (IMPORTANT PART)
+//   ===================================== */
+
+//   let complaintRow = 2;
+//   let bankStartRow = 2;
+
+//   filtered.forEach((c) => {
+//     const bankCount = c.banks?.length || 0;
+
+//     if (bankCount > 0) {
+//       const cell = XLSX.utils.encode_cell({ r: complaintRow - 1, c: 8 });
+
+//       wsComplaints[cell] = {
+//         t: "s",
+//         f: `HYPERLINK("#'Banks'!A${bankStartRow}", "View Banks")`,
+//       };
+
+//       bankStartRow += bankCount;
+//     }
+
+//     complaintRow++;
+//   });
+
+//   let bankRow = 2;
+//   let txnStartRow = 2;
+
+//   filtered.forEach((c) => {
+//     (c.banks || []).forEach((b) => {
+//       const txnCount = b.transactions?.length || 0;
+
+//       if (txnCount > 0) {
+//         const cell = XLSX.utils.encode_cell({ r: bankRow - 1, c: 5 });
+
+//         wsBanks[cell] = {
+//           t: "s",
+//           f: `HYPERLINK("#'Transactions'!A${txnStartRow}", "View Txns")`,
+//         };
+
+//         txnStartRow += txnCount;
+//       }
+
+//       bankRow++;
+//     });
+//   });
+
+//   /* =====================================
+//      FORMATTING
+//   ===================================== */
+
+//   wsComplaints["!freeze"] = { ySplit: 1 };
+//   wsBanks["!freeze"] = { ySplit: 1 };
+//   wsTransactions["!freeze"] = { ySplit: 1 };
+
+//   wsComplaints["!cols"] = [
+//     { wch: 6 },
+//     { wch: 18 },
+//     { wch: 14 },
+//     { wch: 8 },
+//     { wch: 18 },
+//     { wch: 18 },
+//     { wch: 22 },
+//     { wch: 14 },
+//     { wch: 16 },
+//   ];
+
+//   wsBanks["!cols"] = [
+//     { wch: 18 },
+//     { wch: 10 },
+//     { wch: 22 },
+//     { wch: 22 },
+//     { wch: 14 },
+//     { wch: 18 },
+//   ];
+
+//   wsTransactions["!cols"] = [
+//     { wch: 18 },
+//     { wch: 18 },
+//     { wch: 22 },
+//     { wch: 22 },
+//     { wch: 14 },
+//     { wch: 24 },
+//     { wch: 14 },
+//     { wch: 10 },
+//     { wch: 16 },
+//   ];
+
+//   /* =====================================
+//      CREATE WORKBOOK & EXPORT
+//   ===================================== */
+//   const wb = XLSX.utils.book_new();
+
+//   XLSX.utils.book_append_sheet(wb, wsComplaints, "Complaints");
+//   XLSX.utils.book_append_sheet(wb, wsBanks, "Banks");
+//   XLSX.utils.book_append_sheet(wb, wsTransactions, "Transactions");
+
+//   const date = new Date().toISOString().slice(0, 10);
+//   XLSX.writeFile(wb, `Complaints_Linked_PivotReady_${date}.xlsx`);
+// };
+
+const styleWorksheet = (ws) => {
+  if (!ws["!ref"]) return;
+
+  const range = XLSX.utils.decode_range(ws["!ref"]);
+
+  for (let R = range.s.r; R <= range.e.r; ++R) {
+    for (let C = range.s.c; C <= range.e.c; ++C) {
+      const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+      const cell = ws[cellRef];
+      if (!cell) continue;
+
+      // HEADER ROW
+      if (R === 0) {
+        cell.s = {
+          font: { bold: true, color: { rgb: "FFFFFF" } },
+          fill: { fgColor: { rgb: "4F46E5" } }, // Indigo
+          alignment: { horizontal: "center", vertical: "center", wrapText: true },
+        };
+      }
+      // EVEN ROWS (zebra)
+      else if (R % 2 === 0) {
+        cell.s = {
+          fill: { fgColor: { rgb: "F8FAFC" } }, // light gray
+        };
+      }
+    }
+  }
+};
+
+
+const exportFullComplaintsToExcel = () => {
+  if (!filtered || filtered.length === 0) {
+    alert("No complaints to export");
+    return;
+  }
+
+  /* =====================================
+     DATA ARRAYS
+  ===================================== */
+  const complaints = [];
+  const banks = [];
+  const transactions = [];
+
+  /* Excel row pointers (row 1 = header) */
+  let bankRowPointer = 2;
+  let transactionRowPointer = 2;
+
+  /* =====================================
+     BUILD DATA (NO LINKS YET)
+  ===================================== */
+  filtered.forEach((c, ci) => {
+    // -------------------
+    // COMPLAINTS SHEET
+    // -------------------
+    complaints.push({
+      "S.No": ci + 1,
+
+      // IDs
+      "Complaint ID": c.complaint_id,
+      "Mongo ID": c._id,
+
+      // Status
+      Status: c.status || "Pending",
+      Read: c.isRead ? "Yes" : "No",
+
+      // Police / Case
+      "Police Station": c.police_station,
+      "GD Case No": c.gd_case_no,
+      "NCRP No": c.ncrp,
+
+      // Complainant
+      "Complainant Name": c.complainant_name,
+      Relation: c.relation,
+      Phone: c.phone_no,
+      Email: c.email_id,
+      Age: c.age,
+      Sex: c.sex,
+      DOB: c.dob,
+      "Present Address": c.present_address,
+
+      // Fraud
+      "Fraud Amount (₹)": c.total_amount || 0,
+      "Fraudster Phone": c.fraudster_phone,
+      "Fraud Description": c.fraud_description,
+
+      // Dates
+      "Created Date": c.createdAt?.slice(0, 10),
+      "Last Updated": c.updatedAt?.slice(0, 10),
+
+      // Link placeholder
+      "Banks →": "",
+    });
+
+    // -------------------
+    // BANKS + TRANSACTIONS
+    // -------------------
+    (c.banks || []).forEach((b, bi) => {
+      banks.push({
+        "Complaint ID": c.complaint_id,
+        "Bank S.No": bi + 1,
+        "Bank Name": b.bank_name,
+        "Account No": b.account_no,
+        IFSC: b.ifsc,
+        "Transactions →": "",
+      });
+
+      (b.transactions || []).forEach((t, ti) => {
+        transactions.push({
+          "Complaint ID": c.complaint_id,
+          "Police Station": c.police_station,
+          "Bank Name": b.bank_name,
+          "Account No": b.account_no,
+          "Transaction S.No": ti + 1,
+          "UTR / Ref": t.refNo,
+          Date: t.date,
+          Time: t.time,
+          "Amount (₹)": Number(t.amount) || 0,
+        });
+
+        transactionRowPointer++;
+      });
+
+      bankRowPointer++;
+    });
+  });
+
+  /* =====================================
+     CREATE WORKSHEETS
+  ===================================== */
+  const wsComplaints = XLSX.utils.json_to_sheet(complaints);
+  const wsBanks = XLSX.utils.json_to_sheet(banks);
+  const wsTransactions = XLSX.utils.json_to_sheet(transactions);
+
+  /* =====================================
+     ADD CLICKABLE LINKS (IMPORTANT)
+  ===================================== */
+
+  // Complaints → Banks
+  let complaintRow = 2;
+  let bankStartRow = 2;
+
+  filtered.forEach((c) => {
+    const bankCount = c.banks?.length || 0;
+
+    if (bankCount > 0) {
+      const cell = XLSX.utils.encode_cell({ r: complaintRow - 1, c: 21 });
+
+      wsComplaints[cell] = {
+        t: "s",
+        f: `HYPERLINK("#'Banks'!A${bankStartRow}", "View Banks")`,
+      };
+
+      bankStartRow += bankCount;
+    }
+
+    complaintRow++;
+  });
+
+  // Banks → Transactions
+  let bankRow = 2;
+  let txnStartRow = 2;
+
+  filtered.forEach((c) => {
+    (c.banks || []).forEach((b) => {
+      const txnCount = b.transactions?.length || 0;
+
+      if (txnCount > 0) {
+        const cell = XLSX.utils.encode_cell({ r: bankRow - 1, c: 5 });
+
+        wsBanks[cell] = {
+          t: "s",
+          f: `HYPERLINK("#'Transactions'!A${txnStartRow}", "View Txns")`,
+        };
+
+        txnStartRow += txnCount;
+      }
+
+      bankRow++;
+    });
+  });
+
+  /* =====================================
+     FORMATTING
+  ===================================== */
+
+  // Freeze headers
+  wsComplaints["!freeze"] = { ySplit: 1 };
+  wsBanks["!freeze"] = { ySplit: 1 };
+  wsTransactions["!freeze"] = { ySplit: 1 };
+
+  // Column widths — COMPLAINTS
+  wsComplaints["!cols"] = [
+    { wch: 6 },   // S.No
+    { wch: 18 },  // Complaint ID
+    { wch: 24 },  // Mongo ID
+    { wch: 14 },  // Status
+    { wch: 8 },   // Read
+    { wch: 18 },  // Station
+    { wch: 16 },  // GD
+    { wch: 16 },  // NCRP
+    { wch: 22 },  // Name
+    { wch: 14 },  // Relation
+    { wch: 14 },  // Phone
+    { wch: 26 },  // Email
+    { wch: 8 },   // Age
+    { wch: 8 },   // Sex
+    { wch: 12 },  // DOB
+    { wch: 30 },  // Address
+    { wch: 18 },  // Amount
+    { wch: 18 },  // Fraud Phone
+    { wch: 40 },  // Description
+    { wch: 14 },  // Created
+    { wch: 14 },  // Updated
+    { wch: 16 },  // Banks link
+  ];
+
+  // Column widths — BANKS
+  wsBanks["!cols"] = [
+    { wch: 18 },
+    { wch: 10 },
+    { wch: 22 },
+    { wch: 22 },
+    { wch: 14 },
+    { wch: 18 },
+  ];
+
+  // Column widths — TRANSACTIONS
+  wsTransactions["!cols"] = [
+    { wch: 18 },
+    { wch: 18 },
+    { wch: 22 },
+    { wch: 22 },
+    { wch: 14 },
+    { wch: 24 },
+    { wch: 14 },
+    { wch: 10 },
+    { wch: 16 },
+  ];
+
+  /* =====================================
+     CREATE WORKBOOK & EXPORT
+  ===================================== */
+  const wb = XLSX.utils.book_new();
+
+  styleWorksheet(wsComplaints);
+styleWorksheet(wsBanks);
+styleWorksheet(wsTransactions);
+
+  XLSX.utils.book_append_sheet(wb, wsComplaints, "Complaints");
+  XLSX.utils.book_append_sheet(wb, wsBanks, "Banks");
+  XLSX.utils.book_append_sheet(wb, wsTransactions, "Transactions");
+
+  const date = new Date().toISOString().slice(0, 10);
+  XLSX.writeFile(wb, `Complaints_Full_Linked_Report_${date}.xlsx`);
+};
+
+
+
+
   const navigate = useNavigate();
 
-
-  const loadData = async () => {
+   const loadData = async () => {
     setLoading(true);
     try {
       const res = await axios({
-        method:'get',
-        url:`${API_BASE}/api/v1/complaints/get-all-complaints`,
-        headers:{
-          "Content-Type":'application/json'
+        method: "get",
+        url: `${API_BASE}/api/v1/complaints/get-all-complaints`,
+        headers: {
+          "Content-Type": "application/json",
         },
-        withCredentials:true});
-        console.log(res.data)
+        withCredentials: true,
+      });
+      console.log(res.data);
       const sorted = res.data.data.sort(
         (a, b) => Number(a.isRead) - Number(b.isRead)
       );
@@ -2176,18 +2684,18 @@ export default function Dashboard() {
     loadData();
   }, []);
 
-  const {mutate}=useMutation({
-    mutationFn:Logout,
-    onSuccess:async()=>{
-       queryClient.removeQueries({queryKey:['admin'], exact:true})
-      navigate('/login', {replace:true});
+  const { mutate } = useMutation({
+    mutationFn: Logout,
+    onSuccess: async () => {
+      queryClient.removeQueries({ queryKey: ["admin"], exact: true });
+      navigate("/login", { replace: true });
     },
-    onError:async()=>{
-      alert('Something went wrong.');
-    }
-  })
-  
-  function handleLogout(){
+    onError: async () => {
+      alert("Something went wrong.");
+    },
+  });
+
+  function handleLogout() {
     mutate();
   }
   // -----------------------------
@@ -2195,10 +2703,18 @@ export default function Dashboard() {
   // -----------------------------
   const markAsRead = async (id) => {
     try {
-      await axios.patch(`${API_BASE}/api/v1/complaints/${id}/mark-read`,{}, {withCredentials:true});
+      await axios.patch(
+        `${API_BASE}/api/v1/complaints/${id}/mark-read`,
+        {},
+        { withCredentials: true }
+      );
       // optimistic local update
-      setData((prev) => prev.map((c) => (c._id === id ? { ...c, isRead: true } : c)));
-      setFiltered((prev) => prev.map((c) => (c._id === id ? { ...c, isRead: true } : c)));
+      setData((prev) =>
+        prev.map((c) => (c._id === id ? { ...c, isRead: true } : c))
+      );
+      setFiltered((prev) =>
+        prev.map((c) => (c._id === id ? { ...c, isRead: true } : c))
+      );
     } catch (err) {
       console.error("markAsRead failed:", err);
     }
@@ -2222,7 +2738,8 @@ export default function Dashboard() {
 
     if (status) result = result.filter((c) => c.status === status);
     if (station) result = result.filter((c) => c.police_station === station);
-    if (exact) result = result.filter((c) => c.createdAt?.slice(0, 10) === exact);
+    if (exact)
+      result = result.filter((c) => c.createdAt?.slice(0, 10) === exact);
     if (from) result = result.filter((c) => c.createdAt?.slice(0, 10) >= from);
     if (to) result = result.filter((c) => c.createdAt?.slice(0, 10) <= to);
 
@@ -2245,7 +2762,8 @@ export default function Dashboard() {
   const stationStats = Object.values(
     data.reduce((acc, c) => {
       if (!c.police_station) return acc;
-      if (!acc[c.police_station]) acc[c.police_station] = { station: c.police_station, count: 0 };
+      if (!acc[c.police_station])
+        acc[c.police_station] = { station: c.police_station, count: 0 };
       acc[c.police_station].count++;
       return acc;
     }, {})
@@ -2269,34 +2787,71 @@ export default function Dashboard() {
   //   return "bg-gray-100 text-gray-800";
   // };
   const statusBadgeClass = (status) => {
-  if (status === "Closed") return "bg-green-100 text-green-700 border-green-300";
-  if (status === "Under Review") return "bg-pink-100 text-pink-700 border-pink-300";
-  return "bg-gray-100 text-gray-700 border-gray-300";
-};
-
+    if (status === "Closed")
+      return "bg-green-100 text-green-700 border-green-300";
+    if (status === "Under Review")
+      return "bg-pink-100 text-pink-700 border-pink-300";
+    return "bg-gray-100 text-gray-700 border-gray-300";
+  };
 
   return (
     <>
-      {!selectedComplaint ? (
+       
         <div className="min-h-screen bg-gradient-to-br from-pink-50 via-indigo-50 to-blue-50 p-6">
           <div className="max-w-7xl mx-auto">
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
               <div>
-                <h1 className="text-4xl font-extrabold text-indigo-600">Cyber Cell: Dashboard</h1>
-                <p className="text-sm text-gray-600 mt-1">Overview of complaints</p>
+                <h1 className="text-4xl font-extrabold text-indigo-600">
+                  Cyber Cell: Dashboard
+                </h1>
+                <p className="text-sm text-gray-600 mt-1">
+                  Overview of complaints
+                </p>
               </div>
 
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-full shadow">
-                  <svg className="w-5 h-5 text-pink-500" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 2v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                    <path d="M12 18v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                    <path d="M4.93 4.93l2.83 2.83" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                    <path d="M16.24 16.24l2.83 2.83" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                    <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5" />
+                  <svg
+                    className="w-5 h-5 text-pink-500"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                  >
+                    <path
+                      d="M12 2v4"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d="M12 18v4"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d="M4.93 4.93l2.83 2.83"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d="M16.24 16.24l2.83 2.83"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                    />
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="3"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                    />
                   </svg>
-                  <div className="text-sm text-gray-700 font-medium">Unread</div>
+                  <div className="text-sm text-gray-700 font-medium">
+                    Unread
+                  </div>
                   <div className="ml-2 px-2 py-1 rounded-full bg-indigo-100 text-indigo-700 font-semibold text-sm">
                     {unread}
                   </div>
@@ -2308,6 +2863,13 @@ export default function Dashboard() {
                 >
                   Refresh
                 </button>
+                <button
+  onClick={exportFullComplaintsToExcel}
+  className="px-4 py-2 rounded-lg bg-emerald-600 text-white shadow hover:bg-emerald-700 transition"
+>
+  Export Full Excel
+</button>
+
                 <button
                   onClick={handleLogout}
                   className="px-4 py-2 rounded-lg bg-indigo-600 text-white shadow hover:bg-indigo-700 transition"
@@ -2321,22 +2883,30 @@ export default function Dashboard() {
             <div className="grid md:grid-cols-3 gap-6 mb-8">
               <div className="bg-white rounded-2xl shadow p-5 border-l-4 border-indigo-400">
                 <p className="text-xs text-gray-500">Total Complaints</p>
-                <div className="mt-2 text-3xl font-bold text-indigo-700">{total}</div>
+                <div className="mt-2 text-3xl font-bold text-indigo-700">
+                  {total}
+                </div>
               </div>
               <div className="bg-white rounded-2xl shadow p-5 border-l-4 border-pink-400">
                 <p className="text-xs text-gray-500">Unread</p>
-                <div className="mt-2 text-3xl font-bold text-pink-600">{unread}</div>
+                <div className="mt-2 text-3xl font-bold text-pink-600">
+                  {unread}
+                </div>
               </div>
               <div className="bg-white rounded-2xl shadow p-5 border-l-4 border-green-400">
-                <p className="text-xs text-gray-500">High Value (&gt;1L)</p>
-                <div className="mt-2 text-3xl font-bold text-green-700">{highValue}</div>
+                <p className="text-xs text-gray-500">High Value (&gt;5L)</p>
+                <div className="mt-2 text-3xl font-bold text-green-700">
+                  {highValue}
+                </div>
               </div>
             </div>
 
             {/* Charts */}
             <div className="grid lg:grid-cols-2 gap-6 mb-8">
               <div className="bg-white rounded-2xl shadow p-5">
-                <p className="text-sm font-semibold text-gray-800 mb-3">Cases by Station</p>
+                <p className="text-sm font-semibold text-gray-800 mb-3">
+                  Cases by Station
+                </p>
                 <div className="w-full h-56">
                   <ResponsiveContainer>
                     <BarChart data={stationStats}>
@@ -2344,14 +2914,20 @@ export default function Dashboard() {
                       <XAxis dataKey="station" tick={{ fontSize: 12 }} />
                       <YAxis />
                       <Tooltip />
-                      <Bar dataKey="count" fill="#6366f1" radius={[6, 6, 0, 0]} />
+                      <Bar
+                        dataKey="count"
+                        fill="#6366f1"
+                        radius={[6, 6, 0, 0]}
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
               </div>
 
               <div className="bg-white rounded-2xl shadow p-5">
-                <p className="text-sm font-semibold text-gray-800 mb-3">Amount Trend (last 7)</p>
+                <p className="text-sm font-semibold text-gray-800 mb-3">
+                  Amount Trend (last 7)
+                </p>
                 <div className="w-full h-56">
                   <ResponsiveContainer>
                     <LineChart data={weeklyTrend}>
@@ -2359,7 +2935,12 @@ export default function Dashboard() {
                       <XAxis dataKey="day" tick={{ fontSize: 12 }} />
                       <YAxis />
                       <Tooltip />
-                      <Line type="monotone" dataKey="amount" stroke="#10b981" strokeWidth={3} />
+                      <Line
+                        type="monotone"
+                        dataKey="amount"
+                        stroke="#10b981"
+                        strokeWidth={3}
+                      />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -2368,7 +2949,9 @@ export default function Dashboard() {
 
             {/* Filters */}
             <div className="bg-white rounded-2xl shadow p-5 mb-6">
-              <h4 className="text-sm font-semibold text-gray-800 mb-3">Filters</h4>
+              <h4 className="text-sm font-semibold text-gray-800 mb-3">
+                Filters
+              </h4>
 
               <div className="grid lg:grid-cols-6 gap-4">
                 <div className="lg:col-span-2">
@@ -2387,7 +2970,14 @@ export default function Dashboard() {
                     value={statusFilter}
                     onChange={(e) => {
                       setStatusFilter(e.target.value);
-                      filter(search, e.target.value, stationFilter, dateFrom, dateTo, dateExact);
+                      filter(
+                        search,
+                        e.target.value,
+                        stationFilter,
+                        dateFrom,
+                        dateTo,
+                        dateExact
+                      );
                     }}
                     className="w-full mt-1 px-3 py-2 border rounded-xl shadow-sm"
                   >
@@ -2399,12 +2989,21 @@ export default function Dashboard() {
                 </div>
 
                 <div>
-                  <label className="text-xs text-gray-500">Police Station</label>
+                  <label className="text-xs text-gray-500">
+                    Police Station
+                  </label>
                   <select
                     value={stationFilter}
                     onChange={(e) => {
                       setStationFilter(e.target.value);
-                      filter(search, statusFilter, e.target.value, dateFrom, dateTo, dateExact);
+                      filter(
+                        search,
+                        statusFilter,
+                        e.target.value,
+                        dateFrom,
+                        dateTo,
+                        dateExact
+                      );
                     }}
                     className="w-full mt-1 px-3 py-2 border rounded-xl shadow-sm"
                   >
@@ -2429,7 +3028,14 @@ export default function Dashboard() {
                     value={dateExact}
                     onChange={(e) => {
                       setDateExact(e.target.value);
-                      filter(search, statusFilter, stationFilter, dateFrom, dateTo, e.target.value);
+                      filter(
+                        search,
+                        statusFilter,
+                        stationFilter,
+                        dateFrom,
+                        dateTo,
+                        e.target.value
+                      );
                     }}
                     className="w-full mt-1 px-3 py-2 border rounded-xl shadow-sm"
                   />
@@ -2442,7 +3048,14 @@ export default function Dashboard() {
                     value={dateFrom}
                     onChange={(e) => {
                       setDateFrom(e.target.value);
-                      filter(search, statusFilter, stationFilter, e.target.value, dateTo, dateExact);
+                      filter(
+                        search,
+                        statusFilter,
+                        stationFilter,
+                        e.target.value,
+                        dateTo,
+                        dateExact
+                      );
                     }}
                     className="w-full mt-1 px-3 py-2 border rounded-xl shadow-sm"
                   />
@@ -2455,7 +3068,14 @@ export default function Dashboard() {
                     value={dateTo}
                     onChange={(e) => {
                       setDateTo(e.target.value);
-                      filter(search, statusFilter, stationFilter, dateFrom, e.target.value, dateExact);
+                      filter(
+                        search,
+                        statusFilter,
+                        stationFilter,
+                        dateFrom,
+                        e.target.value,
+                        dateExact
+                      );
                     }}
                     className="w-full mt-1 px-3 py-2 border rounded-xl shadow-sm"
                   />
@@ -2478,7 +3098,7 @@ export default function Dashboard() {
 
                 <thead className="bg-indigo-50 text-indigo-800 text-xs uppercase">
                   <tr>
-                    <th className="px-3 py-3"></th>
+                    <th className="px-3 py-3">S.No</th>
                     <th className="px-4 py-3 text-left">Complaint ID</th>
                     <th className="px-4 py-3 text-left">Complainant</th>
                     <th className="px-4 py-3 text-left">Fraudster</th>
@@ -2492,18 +3112,24 @@ export default function Dashboard() {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan="8" className="text-center py-8 text-gray-500">
+                      <td
+                        colSpan="8"
+                        className="text-center py-8 text-gray-500"
+                      >
                         Loading...
                       </td>
                     </tr>
                   ) : filtered.length === 0 ? (
                     <tr>
-                      <td colSpan="8" className="text-center py-8 text-gray-400 italic">
+                      <td
+                        colSpan="8"
+                        className="text-center py-8 text-gray-400 italic"
+                      >
                         No complaints found.
                       </td>
                     </tr>
                   ) : (
-                    filtered.map((c) => (
+                    filtered.map((c, i) => (
                       <tr
                         key={c._id}
                         className={`border-b transition-colors duration-200 hover:bg-indigo-50 ${
@@ -2512,62 +3138,84 @@ export default function Dashboard() {
                         onClick={() => {
                           if (!c.isRead) markAsRead(c._id);
                           setSelectedComplaint(c);
+                          navigate(`/complaints/${c._id}`, )
                         }}
                       >
                         {/* sticky badge */}
                         <td
                           className="px-3 py-3 bg-white"
-                          style={{ position: "sticky", left: 0, zIndex: 20, borderRight: "1px solid #eef2ff" }}
+                          style={{
+                            position: "sticky",
+                            left: 0,
+                            zIndex: 20,
+                            borderRight: "1px solid #eef2ff",
+                          }}
                         >
+                          {i + 1}
                           {!c.isRead ? (
                             <span className="inline-flex items-center px-2 py-1 rounded-full bg-pink-200 text-pink-800 text-xs font-semibold shadow-sm">
                               NEW
                             </span>
                           ) : (
-                            <span className="inline-block w-6" />
+                            <span className="inline-block w-6"></span>
                           )}
                         </td>
 
-                        <td className="px-4 py-3 font-semibold text-indigo-700">{c.complaint_id}</td>
+                        <td className="px-4 py-3 font-semibold text-indigo-700">
+                          {c.complaint_id}
+                        </td>
                         <td className="px-4 py-3">{c.complainant_name}</td>
-                        <td className="px-4 py-3 text-indigo-600">{c.fraudster_phone || "—"}</td>
-                        <td className="px-4 py-3 font-medium text-green-600">₹{c.total_amount?.toLocaleString() || 0}</td>
+                        <td className="px-4 py-3 text-indigo-600">
+                          {c.fraudster_phone || "—"}
+                        </td>
+                        <td className="px-4 py-3 font-medium text-green-600">
+                          ₹{c.total_amount?.toLocaleString() || 0}
+                        </td>
                         <td className="px-4 py-3">{c.police_station}</td>
-                        <td className="px-4 py-3">{c.createdAt?.slice(0, 10)}</td>
-                        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                        <td className="px-4 py-3">
+                          {c.createdAt?.slice(0, 10)}
+                        </td>
+                        <td
+                          className="px-4 py-3"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           {/* <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusBadgeClass(c.status)}`}>
                             {c.status || "Pending"}
                           </span> */}
 
-                          
+                          <select
+                            value={c.status}
+                            onChange={async (e) => {
+                              const newStatus = e.target.value;
 
+                              // Update backend
+                              await updateStatus(c._id, newStatus);
 
-  <select
-    value={c.status}
-    onChange={async (e) => {
-      const newStatus = e.target.value;
+                              // Update local UI immediately
+                              setData((prev) =>
+                                prev.map((item) =>
+                                  item._id === c._id
+                                    ? { ...item, status: newStatus }
+                                    : item
+                                )
+                              );
 
-      // Update backend
-      await updateStatus(c._id, newStatus);
-
-      // Update local UI immediately
-      setData(prev => prev.map(item =>
-        item._id === c._id ? { ...item, status: newStatus } : item
-      ));
-
-      setFiltered(prev => prev.map(item =>
-        item._id === c._id ? { ...item, status: newStatus } : item
-      ));
-    }}
-    className={`px-2 py-1 rounded-full text-xs font-semibold border ${statusBadgeClass(c.status)} cursor-pointer`}
-  >
-    <option value="Pending">Pending</option>
-    <option value="Under Review">Under Review</option>
-    <option value="Closed">Closed</option>
-  </select>
-
-
-                    
+                              setFiltered((prev) =>
+                                prev.map((item) =>
+                                  item._id === c._id
+                                    ? { ...item, status: newStatus }
+                                    : item
+                                )
+                              );
+                            }}
+                            className={`px-2 py-1 rounded-full text-xs font-semibold border ${statusBadgeClass(
+                              c.status
+                            )} cursor-pointer`}
+                          >
+                            <option value="Pending">Pending</option>
+                            <option value="Under Review">Under Review</option>
+                            <option value="Closed">Closed</option>
+                          </select>
                         </td>
                       </tr>
                     ))
@@ -2577,24 +3225,15 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-      ) : (
-        <ComplaintFullView
-          complaint={selectedComplaint}
-          apiBase={API_BASE}
-          onClose={() => setSelectedComplaint(null)}
-          refresh={loadData}
-          
-          
-        />
-      )}
+      ) 
+    
     </>
   );
 }
 
-
-
 async function updateStatus(id, status) {
-  await axios.patch(`${API_BASE}/api/v1/complaints/${id}/status`, 
+  await axios.patch(
+    `${API_BASE}/api/v1/complaints/${id}/status`,
     { status },
     { withCredentials: true }
   );
