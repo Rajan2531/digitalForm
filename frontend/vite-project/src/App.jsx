@@ -716,7 +716,7 @@ const removeCard = (index) => {
                   />
                 </label>
                 <label>
-                  Bank passbook front page:
+                  Fraudulant account passbook front page / Cancelled cheque:
                   
                   <input
                     type="file"
