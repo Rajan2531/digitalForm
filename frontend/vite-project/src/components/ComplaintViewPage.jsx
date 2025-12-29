@@ -341,7 +341,7 @@ export default function ComplaintFullView() {
                   />
                 ) : (
                   <div className="font-bold text-lg text-emerald-700">
-                    ₹{form.total_amount?.toLocaleString() || 0}
+                    ₹{form.total_amount|| 0}
                   </div>
                 )}
               </div>
@@ -640,7 +640,7 @@ export default function ComplaintFullView() {
                                     onChange={(e) => updateTransactionField(bi, ti, "amount", e.target.value)}
                                   />
                                 ) : (
-                                  `₹${Number(tx.amount || 0).toLocaleString()}`
+                                  `₹${Number(tx.amount || 0)}`
                                 )}
                               </td>
 

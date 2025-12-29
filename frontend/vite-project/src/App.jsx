@@ -143,7 +143,7 @@ const removeCard = (index) => {
       //     if (files[f]) data.append(f, files[f]);
       //   }
       // );
-      ["aadhar", "gd_copy", "bank_statement", "card_copy", "other_doc"].forEach(
+      ["aadhar", "gd_copy", "bank_statement", "bank_passbook", "card_copy", "other_doc"].forEach(
         (field) => {
           if (files[field]) {
             files[field].forEach((file) => {
@@ -467,14 +467,13 @@ const removeCard = (index) => {
 
                 {/* ✅ Fraudster’s Phone */}
                 <label className="sm:col-span-3">
-                  Fraudster's Phone Number (if any)
+                  Fraudster's Phone Number (if any, In case of multiple put '/' and enter)
                   <input
                     type="text"
                     name="fraudster_phone"
                     value={form.fraudster_phone}
                     onChange={onChange}
-                    minLength={10}
-                    maxLength={10}
+                    
                     placeholder="Same number mentioned in FIR or G.D."
                     className="input"
                   />
@@ -716,6 +715,26 @@ const removeCard = (index) => {
     hover:file:bg-blue-700"
                   />
                 </label>
+                <label>
+                  Bank passbook front page:
+                  
+                  <input
+                    type="file"
+                    name="bank_passbook"
+                    accept="image/*,.pdf"
+                    multiple
+                    
+                    onChange={onFileChange}
+                    className=" block w-full text-sm text-gray-700
+    file:mr-4 file:py-2 file:px-4
+    file:rounded-lg file:border-0
+    file:text-sm file:font-medium
+    file:bg-blue-600 file:text-white
+    hover:file:bg-blue-700"
+                  />
+                </label>
+
+
                 {cardFraud && (
                   <label>
                     Credit/Debit Card Copy:

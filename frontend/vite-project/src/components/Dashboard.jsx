@@ -3169,7 +3169,7 @@ styleWorksheet(wsTransactions);
                           {c.fraudster_phone || "—"}
                         </td>
                         <td className="px-4 py-3 font-medium text-green-600">
-                          ₹{c.total_amount?.toLocaleString() || 0}
+                          ₹{c.total_amount || 0}
                         </td>
                         <td className="px-4 py-3">{c.police_station}</td>
                         <td className="px-4 py-3">

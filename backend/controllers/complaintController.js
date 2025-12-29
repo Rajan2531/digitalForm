@@ -65,6 +65,7 @@ exports.createComplaint = async (req, res, next) => {
       aadhar: req.files["aadhar"]?.[0]?.path,
       gd_copy: req.files["gd_copy"]?.[0]?.path,
       bank_statement: (req.files["bank_statement"] || []).map((f)=>f.path),
+      bank_passbook: (req.files["bank_passbook"] || []).map((f)=>f.path),
       card_copy: req.files["card_copy"]?.[0]?.path,
       other_docs: (req.files["other_doc"] || []).map((f) => f.path),
     };
