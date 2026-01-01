@@ -82,6 +82,7 @@ const cpUpload = upload.fields([
   { name: "aadhar", maxCount: 1 },
   { name: "gd_copy", maxCount: 1 },
   { name: "bank_statement", maxCount: 10 },
+  {name: "bank_passbook", maxCount:10},
   { name: "card_copy", maxCount: 10 },
   { name: "other_doc", maxCount: 10 },
 ]);
