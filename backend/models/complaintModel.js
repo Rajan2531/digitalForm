@@ -72,6 +72,7 @@ const ComplaintSchema = new mongoose.Schema(
       aadhar: String,
       gd_copy: String,
       bank_statement: [String],
+      bank_passbook:[String],
       card_copy: String,
       other_docs: [String],
     },
