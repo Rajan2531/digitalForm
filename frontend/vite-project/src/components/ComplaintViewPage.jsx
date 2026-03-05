@@ -7,6 +7,7 @@ import { GetComplaint } from "../features/complaints/queryFunctions";
 import { useNavigate, useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
 import queryClient from "../context/queryClient";
+import Loader from "./Loader";
 
 const apiBase = import.meta.env.VITE_API_BASE
 /**
@@ -241,7 +242,7 @@ export default function ComplaintFullView() {
   );
   
    if(isPending){
-    return <h1>loading</h1>
+    return <Loader/>
   }
   return (
     <div className="fixed inset-0 bg-slate-50 overflow-y-auto z-50">

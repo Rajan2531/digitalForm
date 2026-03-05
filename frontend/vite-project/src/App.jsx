@@ -3,7 +3,7 @@ import axios from "axios";
 import TransactionSection from "./components/TransactionSection";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
-const MAX_SIZE = 3 * 1024 * 1024;
+const MAX_SIZE = 10 * 1024 * 1024;
 export default function App() {
   const [complaint_id, setComplaint_id] = useState("");
   const [form, setForm] = useState({
@@ -70,9 +70,20 @@ const removeCard = (index) => {
   setCards((prev) => prev.filter((_, i) => i !== index));
 };
 
-
+const calculateAge = (dob) => {
+  const birth = new Date(dob);
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
+};
   // function to handle changes in value of the form in input field.
   const onChange = (e) => {
+    if(e.target.name === "dob"){
+      const age = calculateAge(e.target.value);
+      setForm((f)=>({...f, dob:e.target.value, age}))
+    }
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
   };
 
