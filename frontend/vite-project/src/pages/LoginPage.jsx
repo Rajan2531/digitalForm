@@ -65,8 +65,8 @@ export default function LoginPage() {
   
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState("cybercellssd@gmail.com");
-  const [password, setPassword] = useState("$Ssd#@2025");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
 
   const {mutate, isPending, isError, error} = useMutation({
